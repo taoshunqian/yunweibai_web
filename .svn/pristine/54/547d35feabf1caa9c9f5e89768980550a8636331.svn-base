@@ -1,0 +1,184 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="启用">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square" icon-size="15px"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="类型" is-link :value="deviceType" @click="showPickerFn(1)" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="逻辑反">
+      <template #right-icon>
+        <RadioGroup v-model="checked2">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >启用</Radio
+          >
+          <Radio name="0" shape="square" icon-size="15px">关闭</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="脉冲检测周期"
+      placeholder="请输入脉冲检测周期"
+      input-align="right"
+      v-model="rataInfo[3]"
+      type="number"
+    >
+    </Field>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="状态" is-link :value="state" @click="showPickerFn(2)" />
+  </CellGroup>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <Picker
+      title="协议类型"
+      :columns="columns"
+      @cancel="showPicker = false"
+      :default-index="deviceColorIndex"
+      @confirm="onConfirm"
+    />
+  </Popup>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  CellGroup,
+  Cell,
+  Checkbox,
+  Field,
+  RadioGroup,
+  Radio,
+  Toast,
+  Popup,
+  Picker,
+} from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+// 标题
+const navTitle = ref("正反转传感器");
+
+const showPicker = ref(false); // 弹出层是否显示
+
+const columns = ref([]);
+const columns2 = ["三点磁触式", "脉冲AD式", "单点磁吸式"];
+const columns3 = ["停止", "正转", "反转"];
+
+const deviceColorIndex = ref(0);
+const deviceType = ref(""); // 类型
+const checked = ref(true); // 启用
+const checked2 = ref("1"); // 逻辑反
+const state = ref(""); // 状态
+const rataInfo = ref([]);
+const nowCmd = ref("");
+
+const statusPicker = ref(0);
+
+const showPickerFn = (num) => {
+  statusPicker.value = num;
+  if (num == 1) {
+    deviceColorIndex.value = columns2.indexOf(deviceType.value);
+    columns.value = columns2;
+  } else {
+    deviceColorIndex.value = columns3.indexOf(state.value);
+    columns.value = columns3;
+  }
+  showPicker.value = true;
+};
+
+const onConfirm = (e) => {
+  let number = statusPicker.value;
+  if (number == 1) {
+    deviceType.value = e;
+  } else {
+    state.value = e;
+  }
+  showPicker.value = false;
+};
+
+// 保存
+const BottomSubmit = () => {
+  var cmds = [...rataInfo.value];
+  cmds[0] = +checked.value;
+  cmds[1] = columns2.indexOf(deviceType.value);
+  cmds[2] = checked2.value;
+  cmds[4] = columns3.indexOf(state.value);
+  cmds = nowCmd.value + "," + cmds.toString();
+  postAN.ANsendSetting(cmds);
+};
+// 查询
+const BottomSearch = () => {
+  Toast("查询指令下发成功");
+  postAN.ANSend(nowCmd.value);
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-Alarm",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  rataInfo.value = cmdArr;
+  deviceType.value = columns2[cmdArr[1]];
+  state.value = columns3[cmdArr[4]];
+  checked.value = cmdArr[0];
+  checked2.value = cmdArr[2];
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  postAN.ANSend(param[1]);
+  nowCmd.value = param[1];
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

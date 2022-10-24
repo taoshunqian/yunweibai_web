@@ -1,0 +1,94 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    style="margin: 10px"
+    v-for="(item, index) in cellList"
+    :key="index"
+  >
+    <Cell :title="item[0]" :value="item[1]" size="large" />
+  </CellGroup>
+
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { CellGroup, Cell, Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+const cellList = ref([
+  ["设备型号", ""],
+  ["设备序列号", ""],
+  ["硬件版本号 ", ""],
+  ["软件版本号 ", ""],
+  ["MCU版本号 ", ""],
+  ["授权 ", ""],
+  ["制造商名称 ", ""],
+  ["模块型号 ", ""],
+  ["模块版本信息 ", ""],
+  ["模块SN号 ", ""],
+  ["SIM卡IMSI ", ""],
+  ["GPS模块信息 ", ""],
+  ["(ADAS)产品代号 ", ""],
+  ["硬件版本号 ", ""],
+  ["软件版本号 ", ""],
+  ["设备ID ", ""],
+  ["ADAS状态 ", ""],
+  ["DSM状态 ", ""],
+  ["授权状态 ", ""],
+  ["运行状态 ", ""],
+  ["定制状态 ", ""],
+]);
+
+console.log(cellList);
+// 标题
+const navTitle = ref("系统信息");
+// 命名空间
+defineComponent({
+  name: "yunweibao-SystemInfo",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  for(var i=0;i<cmdArr.length;i++) {
+      cellList.value[i][1] = cmdArr[i].split("*")[1];
+  }
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  postAN.ANSend(param[1]);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

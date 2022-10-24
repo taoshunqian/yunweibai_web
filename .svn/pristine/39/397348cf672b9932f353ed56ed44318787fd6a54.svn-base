@@ -1,0 +1,64 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+      <Cell title="北斗" value="定位中" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="卫星数" value="0 ( 差 )" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="WIFI" value="无模块" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="WIFI状态" value="无连接" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="模块类型" value="LTE" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="SIM 卡" value="有 ( 锁定 )" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="3G/4G信号" value="无" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="3G/4G状态" value="拨号中..." />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="网络类型" value="无" />
+  </CellGroup>
+
+
+  
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import {
+  CellGroup,
+  Cell
+} from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("网络状态");
+
+
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style>
+</style>

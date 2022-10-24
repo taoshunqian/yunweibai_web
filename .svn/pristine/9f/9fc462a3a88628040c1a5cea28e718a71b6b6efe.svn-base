@@ -1,0 +1,109 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    style="margin: 10px"
+    class="cellGroup"
+    v-for="(item, index) in netWorkInfo"
+    :key="index"
+  >
+    <Cell :title="item[0]" :value="item[1]" />
+  </CellGroup>
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { CellGroup, Cell, Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const i8ntitleColumn = t("newWork.titleColumn");
+const i8nColumn = t("newWork.columns");
+// console.log(i8nColumn)
+
+var i8nColumnList = i8nColumn.split("!");
+var i8nItems = [];
+for (var i = 0; i < i8nColumnList.length; i++) {
+  var item = i8nColumnList[i].split(",");
+  i8nItems.push(item);
+}
+
+// console.log(i8nItems.toString())
+
+const columns = i8nItems;
+const titleColumn = i8ntitleColumn.split(","); // 标题
+
+// 标题
+const navTitle = ref(t("newWork.navTitle"));
+const netWorkInfo = ref([]);
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+
+  var cmdArr = cmds.split(",").splice(1);
+  let leng = cmdArr.length;
+  var orderNumber = 1;
+  let cmdItems = [];
+  console.log("-------------------------");
+  console.warn(cmds);
+  for (var i = 0; i < leng; i++) {
+    var item = cmdArr[i].split("*");
+    var it = "";
+    if (i < 10) {
+      if (item[1] > columns[i].length) {
+        it = columns[i][columns[i].length - 1];
+      } else {
+        it = columns[i][item[1]];
+      }
+    }
+    if (i < 10) {
+      if (i == 1) { 
+        cmdItems.push([titleColumn[i], item[1]]); // 卫星数
+      } else {
+        cmdItems.push([titleColumn[i], it]);
+      }
+    } else {
+      var value = columns[columns.length - 1][item[1]];
+      cmdItems.push([t("newWork.serverName") + orderNumber, value]);
+      orderNumber++;
+    }
+  }
+  netWorkInfo.value = cmdItems;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  try {
+    var param = getQueryString("param").split("@"); // 解析出指令 // .split("@")
+    postAN.ANSend(param[1]);
+  } catch (e) {
+    console.log(e);
+  }
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style>
+</style>

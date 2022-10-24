@@ -1,0 +1,32 @@
+<template>
+  <Sticky>
+    <NavBar :title="porps.navTitle" v-if="porps.leftArrow" />
+    <NavBar
+      :title="porps.navTitle"
+      left-text="返回"
+      left-arrow
+      @click-left="onClickLeft"
+      v-else
+    />
+  </Sticky>
+</template>
+
+
+<script setup>
+import router from "@/router";
+import { NavBar, Sticky } from "vant";
+import { defineComponent, defineProps } from "vue";
+
+const porps = defineProps(["navTitle", "leftArrow"]);
+
+function onClickLeft() {
+  router.go(-1);
+}
+
+defineComponent({
+  name: "component-tab",
+});
+</script>
+
+<style>
+</style>

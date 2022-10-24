@@ -1,0 +1,14 @@
+import { createI18n } from 'vue-i18n'
+import messages from './getMessage'
+
+  //注册i8n实例并引入语言文件
+ const localeData = {
+    legacy: false,
+    locale: 'zh',
+    messages,
+ }
+
+export function setupI18n(app) {
+    const i18n = createI18n(localeData);
+    app.use(i18n);
+}

@@ -1,0 +1,16 @@
+//解码
+function b64Decode(str) {
+    return decodeURI(decodeURIComponent(atob(str)));
+}
+export function getQueryString(name) {
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+    var r = window.location.hash.substr(1).match(reg);
+    if (name == "pass") {
+        var pass = b64Decode(r[2]);
+        if (r != null) return pass;
+        return null;
+    } else {
+        if (r != null) return decodeURI(r[2]);
+        return null;
+    }
+}

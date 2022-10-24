@@ -1,0 +1,54 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">启用</label>
+        <Checkbox
+          v-model="checked"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup" v-for="(item,index) in 5" :key="index">
+    <Cell>
+      <template #title>
+        <label style=" margin-right: 10px;font-size:12px;">序号: {{ item }}</label>
+        <p style="margin:0px;padding-top:5px;font-size:12px;">WIFI名称: TL-tltek</p>
+      </template>
+
+      <template #right-icon>
+          <label style=" margin-top: 28px;font-size:12px;">状态：<span style="color: #5fb878;">在线</span></label>
+      </template>
+    </Cell>
+  </CellGroup>
+
+   <StickyBottom />
+  
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Checkbox } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("WIFI设置");
+
+const checked = ref("1");
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style>
+* {
+}
+</style>

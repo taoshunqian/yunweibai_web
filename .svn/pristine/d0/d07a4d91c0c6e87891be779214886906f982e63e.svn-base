@@ -1,0 +1,68 @@
+import { createRouter, createMemoryHistory } from 'vue-router';
+
+
+const Home = () => import('@/views/Home.vue');
+const SettingsIP = () => import('@/views/SettingsIP.vue');
+const BSD = () => import('@/views/BSD.vue');
+const CarInfo = () => import('@/views/CarInfo.vue');
+const In3G4G = () => import('@/views/3G4G.vue');
+const WifiSettings = () => import('@/views/WifiSettings.vue');
+const PlatformSettings = () => import('@/views/PlatformSettings.vue');
+const ServeInfo = () => import('@/views/ServeInfo.vue');
+const CameraSettings = () => import('@/views/CameraSettings.vue');
+
+const routes = [
+    {
+        path: '/',
+        component: Home,
+        name: "首页"
+    },
+    {
+        path: '/SettingsIP',
+        component: SettingsIP,
+        name: '设置IP',
+    },
+    {
+        path: '/BSD',
+        component: BSD,
+        name: 'BSD',
+    },
+    {
+        path: '/CarInfo',
+        component: CarInfo,
+        name: '车辆信息',
+    },
+    {
+        path: '/3G4G',
+        component: In3G4G,
+        name: '3G/4G',
+    },
+    {
+        path: '/WifiSettings',
+        component: WifiSettings,
+        name: 'WIFI设置',
+    },
+    {
+        path: '/PlatformSettings',
+        component: PlatformSettings,
+        name: '平台配置',
+    },
+    {
+        path: '/ServeInfo',
+        component: ServeInfo,
+        name: '服务器详细',
+    },
+    {
+        path: '/CameraSettings',
+        component: CameraSettings,
+        name: '摄像头设置',
+    }
+    
+];
+
+const router = createRouter({
+    routes,
+    history: createMemoryHistory()
+});
+
+export default router;

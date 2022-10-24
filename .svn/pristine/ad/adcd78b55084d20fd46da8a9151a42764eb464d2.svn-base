@@ -1,0 +1,41 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px;" class="cellGroup" v-for="(item,index) in 5" :key="index">
+    <Cell>
+      <template #title>
+        <label style=" margin-right: 10px;font-size:12px;">服务器: {{ item }}</label>
+        <p style="margin:0px;padding-top:5px;font-size:12px;">服务器IP: TL-tltek</p>
+        <p style="margin:0px;padding-top:5px;font-size:12px;">服务器端口: 9399</p>
+      </template>
+
+      <template #right-icon>
+          <div style="font-size:12px;">
+              <p style="margin:0px;">服务器状态：不启用</p>
+              <p style="margin-top: 5px;">设备状态: <span style="color: #5fb878;">在线</span></p>
+          </div>
+          <!-- <p style="margin:0px;padding-top:5px;">服务器状态：启用</p> -->
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom />
+  
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("平台配置");
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style scoped>
+</style>

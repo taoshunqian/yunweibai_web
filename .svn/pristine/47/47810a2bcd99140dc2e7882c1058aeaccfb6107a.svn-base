@@ -1,0 +1,170 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false"  />
+  <CellGroup
+    inset
+    style="margin: 10px"
+    class="cellGroup"
+    v-for="(item, index) in alarmInfo"
+    :key="index"
+    @click="setAlarmInfo(item,index)"
+  >
+    <Cell>
+      <template #title>
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          IO序号: {{ item[0] }}
+        </p>
+        <p style="margin: 0px">蜂鸣器启用: {{ startFn(item[2]) }}</p>
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          事件名称 : {{ item[4] }}
+        </p>
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          延迟: {{ item[8] + " 秒" }}
+        </p>
+
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          连拍张数: {{ item[12] }}
+        </p>
+      </template>
+
+      <template #right-icon>
+        <div style="font-size: 13px">
+          <label style="margin-right: 10px; font-size: 13px"
+            >启用: {{ startFn(item[1]) }}</label
+          >
+
+          <p style="margin-top: 5px">类型: {{ typeFn(item[6]) }}</p>
+
+          <p style="margin-top: -8px">上报类型: {{ alarmFn(item[9]) }}</p>
+
+          <p style="margin-top: -8px">抓拍模式: {{ cameraTypeFn(item[11]) }}</p>
+
+          <p style="margin-top: -8px">连拍间隔: {{ item[13] + " 秒" }}</p>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <!-- <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" /> -->
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+// import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+import router from "@/router";
+
+// 标题
+const navTitle = ref("报警输入状态");
+const nowCmd = ref(""); // 当前使用的指令
+const alarmInfo = ref([]);
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-Alarm",
+});
+
+const setAlarmInfo = (e,index) => {
+  
+    router.push({
+    path: "/AlarmInfo",
+    query: {
+      item: e,
+      allAlarm: alarmInfo.value,
+      index: index,
+      cmd: nowCmd.value
+    },
+  });
+}
+
+const startFn = (e) => {
+  let str = "";
+  if (e == "0") {
+    str = "不启用";
+  } else if (e == "1") {
+    str = "启用";
+  }
+  return str;
+};
+
+const typeFn = (e) => {
+  let str = "";
+  if (e == "0") {
+    str = "负触发";
+  } else if (e == "1") {
+    str = "正触发";
+  }
+  return str;
+};
+
+const alarmFn = (e) => {
+  let str = "";
+  if (e == "0") {
+    str = "不上报";
+  } else if (e == "1") {
+    str = "正常";
+  } else if (e == "2") {
+    str = "不报警";
+  }
+  return str;
+};
+
+const cameraTypeFn = (e) => {
+  let str = "";
+  if (e == "0") {
+    str = "单拍";
+  } else if (e == "1") {
+    str = "双拍";
+  } else if (e == "2") {
+    str = "连拍";
+  }
+  return str;
+};
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(2);
+  const alarmArr = [];
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("~");
+    alarmArr.push(item);
+  }
+  alarmInfo.value = alarmArr;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  nowCmd.value = param[1];
+  postAN.ANSend(param[1]);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

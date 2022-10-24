@@ -1,0 +1,62 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <Button
+        type="primary"
+        size="normal"
+        style="margin-right: 20px"
+        @click="calibrationFn(1)"
+        >ADAS标定</Button
+      >
+
+      <Button
+        type="primary"
+        size="normal"
+        style="margin-right: 20px"
+        @click="calibrationFn(2)"
+        >BSM1标定</Button
+      >
+
+      <Button type="primary" size="normal" @click="calibrationFn(3)"
+        >BSM2标定</Button
+      >
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 50px" class="cellGroup">
+    <Button type="success" block @click="EndModel">结束向导</Button>
+  </CellGroup>
+
+  <StickyBottom :guide="guide" @BottomNext="BottomNext" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Button } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+import { postAN } from "@/utlis/AdApi";
+
+// 标题
+const navTitle = ref("远程标定");
+const guide = ref(true);
+
+const calibrationFn = (num) => {
+  postAN.calibrationFn(num);
+};
+
+const EndModel = () => {
+  postAN.finishWeb();
+};
+
+defineComponent({
+  name: "yunweibao-Demarcate",
+});
+</script>
+
+<style>
+* {
+}
+</style>

@@ -1,0 +1,164 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">启用</label>
+        <Checkbox
+          v-model="checked"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+
+        <p style="margin: 0px; padding-top: 5px">
+          模块类型: <span style="padding-left: 10px">{{ model }}</span>
+        </p>
+      </template>
+      <template #right-icon>
+        <label style="float: left; margin-right: 10px">{{ warrant }}</label>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup
+    inset
+    style="margin: 10px"
+    class="cellGroup"
+    v-for="(item, index) in wifiList"
+    :key="index"
+    @click="setWifi(item)"
+  >
+    <Cell>
+      <template #title>
+        <label style="margin-right: 10px; font-size: 13px"
+          >序号: {{ item[0] }}</label
+        >
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          WIFI名称: {{ item[1] }}
+        </p>
+      </template>
+
+      <template #right-icon>
+        <label style="margin-top: 28px; font-size: 13px"
+          >状态：<span style="color: #5fb878">{{ item[2] }}</span></label
+        >
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom :guide="guide" @BottomNext="BottomNext" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Checkbox, Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import router from "@/router";
+import { useRoute } from "vue-router";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString, getWifiASC } from "@/utlis/QueryStr";
+
+
+
+let route = useRoute();
+const guideRouter = route.query.guide;
+// 标题
+const navTitle = ref("WIFI设置");
+const guide = ref(false); // 是否是向导模式
+const checked = ref(true);
+const nowCmd = ref(""); // 当前使用的指令
+const model = ref("");
+const warrant = ref("");
+const wifiList = ref([]);
+const modelValue = ["检测中...", "已授权", "未授权"];
+const warrantValue = ["检查中", "无模块", "2.4G"];
+const wifiStatus = ["禁用", "已连接", "未连接"];
+
+const setWifi = (e) => {
+  router.push({
+    path: "/SettingsIP",
+    query: {
+      item: e
+    },
+  });
+};
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  // console.log(str);
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  checked.value = !!+cmdArr[0];
+  warrant.value = warrantValue[cmdArr[1]];
+  model.value = modelValue[cmdArr[2]];
+  if (model.value == undefined) {
+    model.value = modelValue[2];
+  }
+  if (warrant.value == undefined) {
+    warrant.value = modelValue[2];
+  }
+  var data = cmdArr.slice(3);
+  var items = [];
+  for (var i = 0; i < data.length; i++) {
+    var item = data[i].split("#");
+    item[1] = getWifiASC(item[1]);
+    item[2] = wifiStatus[item[2]];
+    items.push(item);
+  }
+  wifiList.value = items;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// function getWifiASC(nameWifi) {
+//   let wifiTemp = "";
+//   if (nameWifi != null && nameWifi.length >= 3) {
+//     for (let i = 0; i < nameWifi.length / 3; i++) {
+//       wifiTemp += String.fromCharCode(nameWifi.substr(i * 3, 3));
+//     }
+//   }
+//   return wifiTemp;
+// }
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = ""
+  if(guideRouter) {
+    var guideIndex = sessionStorage.guideIndex;
+    guide.value = true;
+    var guideArr = JSON.parse(sessionStorage.guide);
+    param = guideArr[guideIndex].split("@")
+  } else {
+    param = getQueryString("param").split("@"); // 解析出指令
+  }
+  nowCmd.value = param[1]; // 当前使用的指令
+  postAN.ANSend(param[1]);
+};
+
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  
+});
+</script>
+
+<style>
+* {
+}
+</style>

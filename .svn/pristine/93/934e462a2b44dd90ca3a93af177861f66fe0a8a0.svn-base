@@ -1,0 +1,155 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+  <CellGroup inset style="margin: 10px">
+    <Cell title="视频制式">
+      <template #right-icon>
+        <RadioGroup v-model="checked">
+          <Radio
+            name="0"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >PAL</Radio
+          >
+          <Radio name="1" shape="square" icon-size="15px">NTSC</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+  <div class="images">
+    <Grid :gutter="2">
+      <GridItem v-for="(item, index) in imageInfo" :key="index" @click="settingsImage(item,index)">
+        <Image height="90" :src="imageArr[index]">
+          <template v-slot:loading>
+            <van-loading type="spinner" size="20" /> </template
+        ></Image>
+      </GridItem>
+    </Grid>
+  </div>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  CellGroup,
+  Cell,
+  RadioGroup,
+  Radio,
+  Image,
+  Toast,
+  Grid,
+  GridItem,
+} from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+import router from "@/router";
+
+// 标题
+const navTitle = ref("摄像头设置");
+const imageNumber = ref(0);
+const imageInfo = ref([]);
+const successImageNum = ref(0);
+const checked = ref("1");
+const imageArr = ref([]);
+const nowCmd = ref(""); // 当前使用的指令
+const allCmd = ref([]); // 所有的指令
+
+defineComponent({
+  name: "yunweibao-BSD",
+});
+
+const settingsImage = (item,index) => {
+  router.push({
+    path: "/CameraInfo",
+    query: {
+      e: item,
+      allCmd: allCmd.value,
+      nowCmd: nowCmd.value,
+      index
+    }
+  });
+}
+
+// 查询
+const BottomSearch = () => {
+  successImageNum.value = 0;
+  Toast("查询指令下发成功");
+  postAN.ANSend(nowCmd.value);
+  return false;
+};
+
+// 保存
+const BottomSubmit = () => {
+  var cmds = [...allCmd.value];
+  cmds[0] = checked.value;
+  cmds.join(",");
+  cmds = nowCmd.value + "," + cmds;
+  postAN.ANsendSetting(cmds);
+  return false;
+};
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  // alert(cmdArr);
+  allCmd.value = cmdArr;
+  imageNumber.value = cmdArr.length - 1;
+  postAN.ANsendSelectPhoto(0);
+  checked.value = cmdArr[0];
+  imageInfo.value = cmdArr.slice(1);
+};
+const callJSResult_IMG = (state, data) => {
+  if (state == 0) {
+    Toast.success(state + successImageNum.value);
+    return false;
+  } else {
+    if (imageNumber.value == successImageNum.value) {
+      console.log(imageArr.value);
+      return false;
+    }
+    imageArr.value.push(data);
+    successImageNum.value++;
+    postAN.ANsendSelectPhoto(successImageNum.value);
+  }
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  nowCmd.value = param[1];
+  postAN.ANSend(param[1]);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  window.callJSResult_IMG = callJSResult_IMG;
+
+  androidStatus_fn();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

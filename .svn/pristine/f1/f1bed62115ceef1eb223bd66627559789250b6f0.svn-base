@@ -1,0 +1,225 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    style="margin: 10px"
+    class="cellGroup"
+    v-for="(item, index) in getResultCmds"
+    :key="index"
+    @click="settingServe(item, index)"
+  >
+    <Cell>
+      <template #title>
+        <!-- {{ item[4] }} -->
+        <label style="margin-right: 10px; font-size: 13px"
+          >{{ $t("platformSettings.title[0]") }}: {{ index + 1 }}</label
+        >
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          {{ $t("platformSettings.title[1]") }}: {{ item[1] }}
+        </p>
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          {{ $t("platformSettings.title[2]") }}: {{ item[2] }}
+        </p>
+      </template>
+
+      <template #right-icon>
+        <div style="font-size: 13px">
+          <p style="margin: 0px" v-show="International">
+            {{ $t("platformSettings.title[3]") }}:
+            <span :style="{ color: item[3] == 1 ? '#5fb878' : 'red' }">{{
+              filterServeState(item[3])
+            }}</span>
+          </p>
+          <p style="margin-top: 5px">
+            {{ $t("platformSettings.title[4]") }}:
+
+            <span
+              :style="{
+                color:
+                  deviceState[index] == 1 ? '#5fb878' : 'red',
+              }"
+              >{{ filterDeviceState(deviceState[index]) }}
+            </span>
+          </p>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom :guide="guide" @BottomNext="BottomNext"  v-show="guide"/>
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted, inject } from "vue";
+import router from "@/router";
+import { useRoute } from "vue-router";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const { lang } = inject("lang");
+const International = ref(lang.value);
+
+let route = useRoute();
+const guideRouter = route.query.guide;
+
+// 标题
+const navTitle = ref(t("platformSettings.navTitle"));
+const sendNum = ref(1);
+const deviceState = ref([]);
+const maxNum = ref(0);
+const resultAll = ref("");
+const jtsvrStatus = ref([]);
+const guide = ref(false); // 是否是向导模式
+const getResultCmds = ref([]);
+
+// 下一步
+const BottomNext = () => {};
+
+const settingServe = (e, index) => {
+  console.log(e);
+  router.push({
+    path: "/ServeInfo",
+    query: {
+      item: e,
+      index,
+      state: deviceState.value[index]
+    },
+  });
+};
+
+function filterServeState(name) {
+  let ti = "";
+  switch (name) {
+    case "1":
+      ti = t("platformSettings.serveState[0]");
+      break;
+    case "0":
+      ti = t("platformSettings.serveState[1]");
+      break;
+    default:
+      ti = t("platformSettings.serveState[2]");
+  }
+  return ti;
+}
+
+function filterDeviceState(name) {
+  let ti = "";
+  switch (name) {
+    case "1":
+      ti = t("platformSettings.deviceState[0]");
+      break;
+    case "0":
+      ti = t("platformSettings.deviceState[1]");
+      break;
+    default:
+      ti = t("platformSettings.deviceState[2]");
+  }
+  return ti;
+}
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  if (cmds.indexOf("JTNUM") !== -1) {
+    maxNum.value = cmds.split(",")[1];
+    if (sendNum.value == 1) {
+      postAN.ANSend("$JTSVR");
+    }
+    return false;
+  }
+
+  if (sendNum.value == +maxNum.value + 1) {
+    resultAll.value += cmds;
+    var cmd = [];
+    var items = resultAll.value.split("!");
+    var devices = items[items.length - 1].split(",");
+
+    var state = [];
+    for (var k = 0; k < devices.length; k++) {
+      if (devices[k].indexOf("JTSVR") !== -1) {
+        state.push(devices[k].split("*")[1]);
+      }
+    }
+    // console.log(state);
+    deviceState.value = state;
+
+    var net = cmds.split(",");
+    var jtsvrState = [];
+    for (var j = 0; j < net.length; j++) {
+      if (net[j].indexOf("JTSVR") !== -1) {
+        jtsvrState.push(net[j]);
+      }
+    }
+    // console.log(jtsvrState);
+    jtsvrStatus.value = jtsvrState;
+    for (var i = 0; i < items.length - 1; i++) {
+      var item = items[i].split(",");
+      cmd.push(item);
+    }
+    getResultCmds.value = cmd;
+    return false;
+  }
+  resultAll.value += cmds + "!";
+  if (sendNum.value == maxNum.value) {
+    postAN.ANSend("$NETSTATEV3");
+  } else {
+    if (sendNum.value <= maxNum.value) {
+      postAN.ANSend("$JTSVR" + [sendNum.value + 1]);
+    }
+  }
+  sendNum.value++;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = "";
+  if (guideRouter) {
+    var guideIndex = sessionStorage.guideIndex;
+    guide.value = true;
+    var guideArr = JSON.parse(sessionStorage.guide);
+    param = guideArr[guideIndex].split("@");
+  } else {
+    param = getQueryString("param").split("@"); // 解析出指令
+  }
+  console.log(param);
+  // var param = getQueryString("param").split("@"); // 解析出指令
+  // if (param[7] != undefined) {
+  //   return false;
+  // }
+  postAN.ANSend("$JTNUM");
+  // postAN.ANSend("$JTSVR2,");
+  // postAN.ANSend("$JTSVR3,");
+  // postAN.ANSend("$JTSVR4,");
+  // postAN.ANSend("$JTSVR5,");
+  // postAN.ANSend("$NETSTATE");
+};
+
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+</style>

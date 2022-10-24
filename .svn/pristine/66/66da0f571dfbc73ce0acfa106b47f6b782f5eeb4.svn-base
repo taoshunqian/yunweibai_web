@@ -1,0 +1,268 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <!-- <div>
+    <div v-for="(item,index) in 10" :key="index">
+      <p v-if="index < 5">555</p>
+      <p v-else>{{ index }}</p>
+    </div>
+  </div> -->
+
+  <CellGroup inset style="margin: 10px">
+    <Image width="100%" height="40vh" :src="image" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('cameraInfo.title[0]')">
+      <template #right-icon>
+        <Checkbox
+          v-model="checked"
+          :disabled="StateDisabled"
+          shape="square"
+          icon-size="15px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell
+      :title="$t('cameraInfo.title[1]')"
+      is-link
+      :value="deviceCamera"
+      @click="showPickerFn"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('cameraInfo.title[2]')">
+      <template #right-icon>
+        <Checkbox v-model="checked2" shape="square" icon-size="15px"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('cameraInfo.title[3]')">
+      <template #right-icon>
+        <Checkbox v-model="checked3" shape="square" icon-size="15px"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <Picker
+      :title="$t('cameraInfo.title[4]')"
+      :columns="columns"
+      @cancel="showPicker = false"
+      :default-index="deviceColorIndex"
+      :confirm-button-text="$t('picker[0]')"
+      :cancel-button-text="$t('picker[1]')"
+      @confirm="onConfirm"
+    />
+  </Popup>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Checkbox, Toast, Image, Popup, Picker } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { postAN } from "@/utlis/AdApi";
+// import { getQueryString } from "@/utlis/QueryStr";
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+let route = useRoute();
+const query = route.query;
+const index = +query.index;
+const item = query.e;
+let allCmd = query.allCmd;
+let nowCmd = query.nowCmd;
+
+// console.log(allCmd.split(",")[0])
+
+// 标题
+const navTitle = ref(
+  t("cameraInfo.navTitle[0]") + (index + 1) + t("cameraInfo.navTitle[1]")
+);
+const defineColumns = [
+  "960H",
+  "720P",
+  "1080P",
+  "TVI 720P",
+  "TVI 1080P",
+  "CVI 720P",
+  "CVI 1080P",
+  "960P",
+];
+// 2 4 6 1
+let testArr = [
+  [1, 3],
+  [2, 4],
+]
+  .join("!")
+  .replace(/,/g, "*");
+console.log(testArr.replace(/!/g, ","));
+
+const columns = ref([]);
+const checked = ref(1); // 启用
+const checked2 = ref(1); // 水平
+const checked3 = ref(1); // 垂直
+const StateDisabled = ref(true);
+const deviceColorIndex = ref(1);
+const showPicker = ref(false); // 弹出层是否显示
+const deviceCamera = ref("");
+const image = ref("");
+const mirrorCmd = ref(""); // 镜像设置指令
+
+// 设置选中的分辨率
+const onConfirm = (e) => {
+  deviceColorIndex.value = columns.value.indexOf(e);
+  deviceCamera.value = e;
+  showPicker.value = false;
+};
+
+const showPickerFn = () => {
+  if (StateDisabled.value) {
+    Toast(t("toast[3]"));
+    return false;
+  }
+  showPicker.value = true;
+};
+
+// 保存
+const BottomSubmit = () => {
+  var cmds = [];
+
+  for (var i = 0; i < allCmd.length; i++) {
+    if (i > 0) {
+      var item = allCmd[i].split(":")[0];
+      var cmd = item.split("#");
+      cmds.push(cmd);
+    }
+  }
+
+  // 获取到分辨率，在分辨率==0时为不启用
+  if (deviceCamera.value != "") {
+    var selectCamera = defineColumns.indexOf(deviceCamera.value);
+    cmds[index][1] = selectCamera + 1; // 不是是数组的索引，因此需要 +1，才是真正的值
+  }
+
+  let replaceCmd = cmds.join("!").replace(/,/g, "*").replace(/!/g, ",");
+  let Cmd = replaceCmd.split(",");
+
+  var powerCmd = [];
+  for (var j = 0; j < Cmd.length; j++) {
+    var powerItem = Cmd[j].split("*")[1];
+    powerCmd.push(powerItem);
+  }
+  let resCmd = nowCmd + "," + allCmd[0] + "," + powerCmd.toString(); // 获取到摄像头设置的指令
+  // console.log(resCmd);
+
+  // 镜像设置
+  let mirror = mirrorCmd.value.split(",");
+  var nowMirror = mirror[index + 1].split("*");
+  nowMirror[1] = +checked2.value;
+  nowMirror[2] = +checked3.value;
+  nowMirror.join(",");
+  mirror[index + 1] = nowMirror;
+  var cmdsMirror = mirror.join("!").replace(/,/g, "*").replace(/!/g, ",");
+  // console.log(cmdsMirror); // 获取到镜像设置
+  postAN.ANsendSetting(cmdsMirror); // 镜像设置
+  postAN.ANsendSetting(resCmd); // 摄像头设置
+  return false;
+};
+// 查询
+const BottomSearch = () => {
+  Toast(t("toast[0]"));
+  androidStatus_fn();
+
+  //   postAN.ANSend(nowCmd.value);
+};
+
+// 解析出支持设置的分辨率
+const splitStr = () => {
+  var itemArr = item.split("#"); // 获取到是否启用
+  checked.value = itemArr[0]; // 启用
+  var cameraArr = itemArr[1].split(":"); // 分辨率
+  console.log(cameraArr);
+  if (cameraArr[0] != 0) {
+    deviceCamera.value = defineColumns[cameraArr[0] - 1]; // 获取到当前选择的分辨率
+    var cameraArr2 = cameraArr[1].split("*");
+    var cameraItems = [];
+    for (var j = 0; j < cameraArr2.length; j++) {
+      cameraItems.push(defineColumns[cameraArr2[j] - 1]);
+    }
+    columns.value = cameraItems; // 显示 支持设置的分辨率
+    deviceColorIndex.value = cameraItems.indexOf(deviceCamera.value); // 获取到分辨率的索引
+    StateDisabled.value = false;
+  } else {
+    StateDisabled.value = true;
+  }
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CameraInfo",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  mirrorCmd.value = cmds;
+  // 获取到 镜像设置
+  var cmdArr = cmds.split(",").splice(1);
+  let nowMirror = cmdArr[index].split("*");
+  checked2.value = +nowMirror[1];
+  checked3.value = +nowMirror[2];
+  splitStr();
+};
+// 安卓图片的回调函数
+const callJSResult_IMG = (state, data) => {
+  if (state == 0) {
+    Toast.success(state + index);
+    return false;
+  } else {
+    image.value = data;
+  }
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANsendSelectPhoto(index);
+  postAN.ANSend("$MIRROR");
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  window.callJSResult_IMG = callJSResult_IMG;
+  androidStatus_fn();
+  splitStr();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

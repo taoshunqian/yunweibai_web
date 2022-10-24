@@ -1,0 +1,47 @@
+<template>
+  <Sticky>
+    <NavBar :title="porps.navTitle" v-if="porps.leftArrow" />
+    <NavBar
+      :title="porps.navTitle"
+      left-text="返回"
+      right-text="Log"
+      left-arrow
+      @click-left="onClickLeft"
+      @click-right="onClickRight"
+      v-else
+    />
+  </Sticky>
+</template>
+
+
+<script setup>
+import router from "@/router";
+import { NavBar, Sticky } from "vant";
+import { defineComponent, defineProps } from "vue";
+
+const porps = defineProps(["navTitle", "leftArrow", "lavelMuch"], true);
+const lavelMuch = porps.lavelMuch || false;
+
+
+
+function onClickLeft() {
+  if (lavelMuch) {
+    router.go(-1);
+  } else {
+    // eslint-disable-next-line no-undef
+    AN.finishWeb();
+  }
+}
+
+const onClickRight = () => {
+  // eslint-disable-next-line no-undef
+  AN.showLogs("logs");
+};
+
+defineComponent({
+  name: "component-tab",
+});
+</script>
+
+<style>
+</style>

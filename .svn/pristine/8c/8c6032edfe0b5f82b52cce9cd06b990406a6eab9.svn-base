@@ -1,0 +1,311 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">{{ $t('settingsIP.title[0]') }}</label>
+        <Checkbox
+          v-model="checked"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+      <template #right-icon>
+        <Button
+          type="primary"
+          size="mini"
+          style="padding: 10px"
+          :disabled="sreachDisabled"
+          @click="Sreach"
+          >{{ $t('settingsIP.button[0]') }}</Button
+        >
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Field
+      :label="$t('settingsIP.title[1]')"
+      :placeholder="$t('settingsIP.placeholder[0]')"
+      input-align="right"
+      v-model="nowShowCmd[2]"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('settingsIP.title[2]')"
+      :placeholder="$t('settingsIP.placeholder[1]')"
+      input-align="right"
+      v-model="nowShowCmd[3]"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Cell :title="$t('settingsIP.title[3]')">
+      <template #right-icon>
+        <RadioGroup v-model="checked2">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >{{ $t('settingsIP.radio[0]') }}</Radio
+          >
+          <Radio name="0" shape="square" icon-size="15px">{{ $t('settingsIP.radio[1]') }}</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('settingsIP.title[4]')"
+      :placeholder="$t('settingsIP.placeholder[2]')"
+      input-align="right"
+      v-model="nowShowCmd[5]"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('settingsIP.title[5]')"
+      :placeholder="$t('settingsIP.placeholder[3]')"
+      input-align="right"
+      v-model="nowShowCmd[6]"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('settingsIP.title[6]')"
+      :placeholder="$t('settingsIP.placeholder[4]')"
+      input-align="right"
+      v-model="nowShowCmd[7]"
+      :label-width="200"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Cell :title="$t('settingsIP.title[7]')">
+      <template #right-icon>
+        <RadioGroup v-model="checked3">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >{{ $t('settingsIP.radio[2]') }}</Radio
+          >
+          <Radio name="0" shape="square" icon-size="15px">{{ $t('settingsIP.radio[3]') }}</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('settingsIP.title[8]')"
+      :placeholder="$t('settingsIP.placeholder[5]')"
+      input-align="right"
+      v-model="nowShowCmd[9]"
+    />
+  </CellGroup>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+
+  <Popup
+    v-model:show="wifiNameShow"
+    closeable
+    close-icon="close"
+    position="bottom"
+    :style="{ height: '50%' }"
+  >
+    <div style="margin-top: 50px">
+      <ContactList
+        v-model="chosenContactId"
+        :list="list"
+        :add-text="$t('settingsIP.title[9]')"
+        @add="onAdd"
+        @select="onSelect"
+      />
+    </div>
+  </Popup>
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { useRoute } from "vue-router";
+import {
+  CellGroup,
+  Field,
+  Radio,
+  RadioGroup,
+  Cell,
+  Checkbox,
+  Button,
+  Toast,
+  Popup,
+  ContactList,
+} from "vant"; // Checkbox
+import { defineComponent, ref, onMounted, inject } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getWifiASC, getWifiASCFormat } from "@/utlis/QueryStr";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const i8nConnectState = t('serveInfo.connectState');
+
+let route = useRoute();
+const query = route.query;
+
+const { lang } = inject("lang");
+const International = ref(lang.value);
+console.log(International)
+
+// 标题
+const wifiNameShow = ref(false);
+const navTitle = ref(t('settingsIP.navTitle'));
+const nowCmd = ref(""); // 当前使用的指令
+
+const checked = ref(true);
+const checked2 = ref("1");
+const checked3 = ref("1");
+const sreachDisabled = ref(false);
+const allCmd = ref([]); // 所有的指令
+const nowShowCmd = ref([]); // 当前使用的一部分指令
+const useCmdIndex = ref(null);
+
+const chosenContactId = ref("");
+const list = ref([]);
+
+const connectState = i8nConnectState.split(","); // 连接状态
+
+const onAdd = () => (wifiNameShow.value = false);
+const onSelect = (contact) => {
+  var name = contact.name.split(": ")[1];
+  chosenContactId.value = contact.id;
+  nowShowCmd.value[2] = name;
+};
+
+// 查询
+const BottomSearch = () => {
+  Toast(t("toast[0]"));
+  postAN.ANSend(nowCmd.value);
+};
+
+// 保存
+const BottomSubmit = () => {
+  var addCmds = allCmd.value;
+  let nowCmd = "";
+  nowCmd = [...nowShowCmd.value];
+  nowCmd[1] = +nowCmd[1];
+  nowCmd[2] = getWifiASCFormat(nowCmd[2]);
+  nowCmd[3] = getWifiASCFormat(nowCmd[3]);
+  addCmds[useCmdIndex.value] = nowCmd.toString();
+  var cmds = "$WIFI," + addCmds.toString();
+  postAN.ANsendSetting(cmds);
+  return false;
+};
+
+const Sreach = () => {
+  sreachDisabled.value = true;
+  Toast(t("toast[4]"));
+  postAN.ANSend("$WIFILIST");
+  setTimeout(() => {
+    wifiNameShow.value = true;
+    sreachDisabled.value = false;
+  }, 1000);
+};
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var item = query.item;
+  var cmds = str.split(";")[0];
+  if (str.indexOf("WIFILIST") !== -1) {
+    var cmdArr2 = cmds.split(",").splice(4);
+    var items = [];
+    console.log(cmdArr2);
+    for (var i = 0; i < cmdArr2.length; i++) {
+      // eslint-disable-next-line no-redeclare
+      var item = cmdArr2[i].split("#");
+      item[2] = connectState[item[2]];
+      items.push({
+        id: item[0] + "",
+        name: t("settingsIP.itemList[0]") + getWifiASC(item[1]),
+        tel: t("settingsIP.itemList[1]") + item[2],
+      });
+    }
+    list.value = items;
+    return false;
+  }
+
+  var cmdArr = cmds.split(",").splice(1);
+  allCmd.value = cmdArr;
+  var data = cmdArr[item[0] - 1].split("#");
+  useCmdIndex.value = item[0] - 1;
+  data[1] = !!+data[1]; // 使能开关
+  data[2] = getWifiASC(data[2]); // ESSID
+  data[3] = getWifiASC(data[3]); // 密码
+  checked2.value = data[4];
+  checked3.value = data[8];
+  nowShowCmd.value = data;
+
+  checked.value = data[1];
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// function getWifiASC(nameWifi) {
+//   let wifiTemp = "";
+
+//   if (nameWifi != null && nameWifi.length >= 3) {
+//     for (let i = 0; i < nameWifi.length / 3; i++) {
+//       wifiTemp += String.fromCharCode(nameWifi.substr(i * 3, 3));
+//     }
+//   }
+//   return wifiTemp;
+// }
+// // 转ASCII
+// function getWifiASCFormat(nameWifi) {
+//   let wifiTemp = "";
+
+//   for (let i = 0; i < nameWifi.length; i++) {
+//     wifiTemp += PrefixInteger(nameWifi[i].charCodeAt(), 3);
+//   }
+
+//   return wifiTemp;
+// }
+// function PrefixInteger(num, m) {
+//   return (Array(m).join(0) + num).slice(-m);
+// }
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  nowCmd.value = "$WIFI"; // 当前使用的指令
+  postAN.ANSend(nowCmd.value);
+  navTitle.value = "WIFI " + query.item[0];
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style>
+</style>

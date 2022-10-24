@@ -1,0 +1,120 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">启用</label>
+        <Checkbox
+          v-model="checked"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+      <template #right-icon>
+        <Button type="primary" size="mini" style="padding: 10px" :disabled="sreachDisabled" @click="Sreach"
+          >搜索</Button
+        >
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Field label="WIFI名称" placeholder="请输入WIFI名称" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="密码" placeholder="请输入密码" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="状态">
+      <template #right-icon>
+        <RadioGroup v-model="checked">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >动态</Radio
+          >
+          <Radio name="2" shape="square" icon-size="15px">静态</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="IP" placeholder="请输入IP" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="子网掩码" placeholder="请输入子网掩码" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="默认网关" placeholder="请输入默认网关" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="DNS">
+      <template #right-icon>
+        <RadioGroup v-model="checked">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >动态DNS</Radio
+          >
+          <Radio name="2" shape="square" icon-size="15px">静态DNS</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="DNS服务器"
+      placeholder="请输入DNS服务器"
+      input-align="right"
+    />
+  </CellGroup>
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import {
+  CellGroup,
+  Field,
+  Radio,
+  RadioGroup,
+  Cell,
+  Checkbox,
+  Button,
+Toast
+} from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("设置IP");
+
+const checked = ref("1");
+const sreachDisabled = ref(false);
+
+const Sreach = () => {
+  sreachDisabled.value = true;
+  Toast('正在搜索,请稍等...');
+  setTimeout(() => {
+    sreachDisabled.value = false;
+  },2000)
+};
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style>
+</style>

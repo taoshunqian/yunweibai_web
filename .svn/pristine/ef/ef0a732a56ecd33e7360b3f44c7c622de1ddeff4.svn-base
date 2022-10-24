@@ -1,0 +1,190 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    style="margin: 10px"
+    class="cellGroup"
+    v-for="(item, index) in getResultCmds"
+    :key="index"
+    @click="settingServe(item, index)"
+  >
+    <Cell>
+      <template #title>
+        <!-- {{ item[4] }} -->
+        <label style="margin-right: 10px; font-size: 13px"
+          >{{ $t("platformSettings.title[0]") }}: {{ index + 1 }}</label
+        >
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          {{ $t("platformSettings.title[1]") }}: {{ item[1] }}
+        </p>
+        <p style="margin: 0px; padding-top: 5px; font-size: 13px">
+          {{ $t("platformSettings.title[2]") }}: {{ item[2] }}
+        </p>
+      </template>
+
+      <template #right-icon>
+        <div style="font-size: 13px">
+          <p style="margin: 0px" v-show="International">
+            {{ $t("platformSettings.title[3]") }}:
+            <span :style="{ 'color':  item[3] == 1 ? '#5fb878' : 'red' }">{{ filterServeState(item[3]) }}</span>
+          </p>
+          <p style="margin-top: 5px">
+            {{ $t("platformSettings.title[4]") }}:
+
+            <span :style="{ 'color':  jtsvrStatus[index].split('*')[1] == 1 ? '#5fb878' : 'red' }">{{ filterDeviceState(jtsvrStatus[index].split("*")[1]) }}</span>
+
+          </p>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom :guide="guide" @BottomNext="BottomNext" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted,inject } from "vue";
+import router from "@/router";
+import { useRoute } from "vue-router";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const { lang } = inject("lang");
+const International = ref(lang.value);
+
+let route = useRoute();
+const guideRouter = route.query.guide;
+
+// 标题
+const navTitle = ref(t("platformSettings.navTitle"));
+const sendNum = ref(0);
+const resultAll = ref("");
+const jtsvrStatus = ref([]);
+const guide = ref(false); // 是否是向导模式
+// const cmds = ref(["$JTSVR2,","$JTSVR3,","$JTSVR4,","$JTSVR5,","$NETSTATE"])
+const getResultCmds = ref([]);
+
+// 下一步
+const BottomNext = () => {};
+
+const settingServe = (e, index) => {
+  console.log(e);
+  router.push({
+    path: "/ServeInfo",
+    query: {
+      item: e,
+      index,
+    },
+  });
+};
+
+function filterServeState(name) {
+  let ti = "";
+  switch (name) {
+    case "1":
+      ti = t("platformSettings.serveState[0]");
+      break;
+    case "0":
+      ti = t("platformSettings.serveState[1]");
+      break;
+    default:
+      ti = t("platformSettings.serveState[2]");
+  }
+  return ti;
+}
+
+function filterDeviceState(name) {
+  let ti = "";
+  switch (name) {
+    case "1":
+      ti = t("platformSettings.serveState[0]");
+      break;
+    case "0":
+      ti = t("platformSettings.serveState[1]");
+      break;
+    default:
+      ti = t("platformSettings.serveState[2]");
+  }
+  return ti;
+}
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+ 
+  sendNum.value++;
+  if (sendNum.value == 6) {
+    var cmd = [];
+    var items = resultAll.value.split("!");
+    // console.log(cmds[0])
+    var net = cmds.split(",");
+    console.log(net[0]);
+    var jtsvrState = []
+    for(var j = 0;j<net.length; j++) {
+      if(net[j].indexOf("JTSVR") !== -1) {
+        jtsvrState.push(net[j])
+      }
+    }
+    jtsvrStatus.value = jtsvrState;
+    for (var i = 0; i < items.length - 1; i++) {
+      var item = items[i].split(",");
+      cmd.push(item);
+    }    
+    getResultCmds.value = cmd;
+    return false;
+  }
+  resultAll.value += cmds + "!";
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = "";
+  if (guideRouter) {
+    var guideIndex = sessionStorage.guideIndex;
+    guide.value = true;
+    var guideArr = JSON.parse(sessionStorage.guide);
+    param = guideArr[guideIndex].split("@");
+  } else {
+    param = getQueryString("param").split("@"); // 解析出指令
+  }
+  // var param = getQueryString("param").split("@"); // 解析出指令
+  // if (param[7] != undefined) {
+  //   return false;
+  // }
+  postAN.ANSend(param[1]);
+  postAN.ANSend("$JTSVR2,");
+  postAN.ANSend("$JTSVR3,");
+  postAN.ANSend("$JTSVR4,");
+  postAN.ANSend("$JTSVR5,");
+  postAN.ANSend("$NETSTATE");
+};
+
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+</style>

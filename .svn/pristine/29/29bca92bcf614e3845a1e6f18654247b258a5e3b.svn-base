@@ -1,0 +1,109 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="当前油位" placeholder="请输入当前油位" input-align="right" v-model="oilInfo[0]">
+      <template #button>
+        <span>%</span>
+      </template></Field
+    >
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="当前油量" placeholder="请输入当前油量" input-align="right" v-model="oilInfo[1]" />
+  </CellGroup>
+
+   <CellGroup inset style="margin: 10px">
+    <Cell title="类型" is-link :value="deviceType" @click="showPickerFn" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="报警阈值" placeholder="请输入报警阈值" input-align="right" v-model="oilInfo[3]" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="标定数目" placeholder="请输入标定数目" input-align="right" v-model="oilInfo[4]" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="总容量" placeholder="请输入总容量" input-align="right" v-model="oilInfo[5]" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="传感器最大值"
+      placeholder="请输入传感器数据最大值"
+      input-align="right"
+      v-model="oilInfo[6]"
+    />
+  </CellGroup>
+
+  <StickyBottom />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Toast, Field } from "vant"; // Checkbox
+import { defineComponent, ref , onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+// 标题
+const navTitle = ref("油感传感器");
+const showPicker = ref(false); // 弹出层是否显示
+const deviceType = ref("");
+const oilInfo = ref([]);
+// const nowCmd = ref("");
+
+const showPickerFn = () => {
+  showPicker.value = true;
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-Alarm",
+});
+
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  console.log(str);
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  oilInfo.value = cmdArr;
+  deviceType.value = cmdArr[2];
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  postAN.ANSend(param[1]);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

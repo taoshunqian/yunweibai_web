@@ -1,0 +1,239 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Field
+      :label="$t('carInfo.label[1]')"
+      type="tel"
+      :placeholder="$t('carInfo.placeholder[1]')"
+      input-align="right"
+      v-model="CarInfo[1]"
+      autosize
+      maxlength="12"
+    >
+    </Field>
+  </CellGroup>
+
+  <CellGroup inset class="cellGroup" style="margin: 10px">
+    <Field
+      :label="$t('carInfo.label[0]')"
+      :placeholder="$t('carInfo.placeholder[0]')"
+      input-align="right"
+      v-model="CarInfo[0]"
+      autosize
+    />
+  </CellGroup>
+
+  
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('carInfo.label[2]')"
+      :placeholder="$t('carInfo.placeholder[2]')"
+      :label-width="200"
+      input-align="right"
+      v-model="CarInfo[2]"
+      autosize
+    >
+    </Field>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Cell
+      :title="$t('carInfo.label[3]')"
+      is-link
+      :value="deviceColor"
+      @click="showPicker = true"
+    />
+  </CellGroup>
+  <!-- 区域代码 -->
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Field
+      :label="$t('carInfo.label[4]')"
+      :placeholder="$t('carInfo.placeholder[3]')"
+      input-align="right"
+      v-model="CarInfo[4]"
+      autosize
+      maxlength="6"
+    >
+    </Field>
+  </CellGroup>
+  <!-- 制造商编号 -->
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Field
+      :label="$t('carInfo.label[5]')"
+      :placeholder="$t('carInfo.placeholder[4]')"
+      input-align="right"
+      v-model="CarInfo[5]"
+      autosize
+    >
+    </Field>
+  </CellGroup>
+  <!-- VIN -->
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Field
+      :label="$t('carInfo.label[6]')"
+      :placeholder="$t('carInfo.placeholder[5]')"
+      input-align="right"
+      v-model="CarInfo[6]"
+      autosize
+    >
+    </Field>
+  </CellGroup>
+  <!-- 车牌分类 -->
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Field
+      :label="$t('carInfo.label[7]')"
+      :placeholder="$t('carInfo.placeholder[6]')"
+      input-align="right"
+      v-model="CarInfo[7]"
+      autosize
+    >
+    </Field>
+  </CellGroup>
+  <!-- 发动机号 -->
+  <CellGroup inset style="margin: 10px" v-show="International">
+    <Field
+      :label="$t('carInfo.label[8]')"
+      :placeholder="$t('carInfo.placeholder[7]')"
+      input-align="right"
+      v-model="CarInfo[8]"
+      autosize
+    >
+    </Field>
+  </CellGroup>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <Picker
+      :title="$t('carInfo.label[9]')"
+      :columns="columns"
+      @cancel="showPicker = false"
+      :default-index="deviceColorIndex"
+      :confirm-button-text="$t('picker[0]')"
+      :cancel-button-text="$t('picker[1]')"
+      @confirm="onConfirm"
+    />
+  </Popup>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Field, Popup, Picker, Cell, Toast } from "vant"; // Checkbox
+import { defineComponent, onMounted, ref, inject } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const { lang } = inject("lang");
+
+// 双向绑定值
+const i8nColumns = t("carInfo.columns");
+const International = ref(lang.value);
+const CarInfo = ref([]); // 获取到的参数集合
+const columns = ref(i8nColumns.split(","));
+const showPicker = ref(false); // 弹出层是否显示
+const guide = ref(false); // 是否是向导模式
+const nowCmd = ref(""); // 当前使用的指令
+const deviceColorIndex = ref(1);
+const deviceColor = ref("");
+const navTitle = ref(t("carInfo.navTitle")); // 标题
+
+// 保存
+const BottomSubmit = () => {
+  
+  CarInfo.value[3] = deviceColorIndex.value == 9 ? deviceColorIndex.value : deviceColorIndex.value + 1;
+  var cmds = nowCmd.value + "," + CarInfo.value.join(",");
+  console.warn("发送数据"+ cmds);
+  postAN.ANsendSetting(cmds);
+  return false;
+};
+// 查询
+const BottomSearch = () => {
+  Toast(t("toast[0]"));
+  postAN.ANSend(nowCmd.value);
+  //  postAN.ANSend("$CAMERAMODE");
+};
+// 下一步
+const BottomNext = () => {};
+
+const onConfirm = (e) => {
+  let index = 0;
+  let text = "";
+  for (var i = 0; i < columns.value.length; i++) {
+    if (columns.value[i] == e) {
+      // eslint-disable-next-line no-unused-vars
+      index = i + 1;
+      // eslint-disable-next-line no-unused-vars
+      text = columns.value[i];
+    }
+  }
+  if (index == 8) {
+    deviceColorIndex.value = 9;
+  } else {
+    deviceColorIndex.value = index - 1;
+  }
+  deviceColor.value = text;
+  showPicker.value = false;
+};
+
+defineComponent({
+  name: "yunweibao-CarInfo",
+});
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  console.warn(cmdArr)
+  CarInfo.value = cmdArr; // 获取到的参数集合
+  deviceColorIndex.value = cmdArr[3] - 1; // 读取设备颜色
+  console.warn(deviceColorIndex.value)
+  if (deviceColorIndex.value > 7) {
+    deviceColorIndex.value = 7;
+  }
+  deviceColor.value = columns.value[deviceColorIndex.value];
+  console.warn(columns.value.toString());
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  try {
+    var param = getQueryString("param").split("@"); // 解析出指令 // .split("@")
+    console.log(param);
+    if (param[7] == 10001) {
+      sessionStorage.guideIndex = 0;
+      // 向导模式
+      guide.value = true;
+    }
+    nowCmd.value = param[1]; // 当前使用的指令
+    postAN.ANSend(param[1]);
+  } catch (e) {
+    console.log(e);
+  }
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style>
+</style>

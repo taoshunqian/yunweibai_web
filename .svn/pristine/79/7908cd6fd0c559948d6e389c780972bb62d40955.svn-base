@@ -1,0 +1,45 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px;" class="cellGroup" v-for="(item,index) in 3" :key="index" >
+    <Cell>
+      <template #title>
+        <label style=" margin-right: 10px;font-size:13px;">名称: HDD</label>
+        <p style="margin:0px;padding-top:15px;font-size:13px;">使用状态: 录像中/无</p>
+        <p style="margin:0px;padding-top:12px;font-size:13px;">磁盘状态: 正常/无</p>
+      </template>
+
+      <template #right-icon>
+          <div style="font-size:13px;">
+              <Button type="primary" size="small" @click="settingServe(item)">格式化</Button>
+              <p style="margin-top: 8px;">总容量: <span style="color: #5fb878;">--</span></p>
+              <p style="margin-top: 2px;">剩余容量: <span style="color: #5fb878;">--</span></p>
+
+          </div>
+          <!-- <p style="margin:0px;padding-top:5px;">服务器状态：启用</p> -->
+      </template>
+    </Cell>
+  </CellGroup>
+
+  
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { CellGroup, Cell,Button } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("磁盘状态");
+
+const settingServe = (e) => {
+  console.log(e);
+}
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style scoped>
+</style>

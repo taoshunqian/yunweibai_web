@@ -1,0 +1,139 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    style="margin: 10px"
+    class="cellGroup"
+    v-for="(item, index) in diskInfo"
+    :key="index"
+  >
+    <Cell>
+      <template #title>
+        <label style="margin-right: 10px; font-size: 13px">{{ $t('diskStatus.title[0]') }}:  {{ item[0] }}</label>
+        <p style="margin: 0px; padding-top: 15px; font-size: 13px">
+          {{ $t('diskStatus.title[1]') }}: 
+          <span :style="{ 'color':  item[1] == 'DiskNormal' ? '#5fb878' : 'red' }">{{ filterDiskState(item[1]) }}</span>
+        </p>
+      </template>
+
+      <template #right-icon>
+        <div style="font-size: 13px">
+          
+          <p style="margin-top: 8px">
+            {{ $t('diskStatus.title[2]') }}: <span style="color: #5fb878"> {{ item[2] }} </span>
+          </p>
+          <p style="margin-top: 2px">
+            {{ $t('diskStatus.title[3]') }}: <span style="color: #5fb878"> {{ item[3] }} </span>
+          </p>
+
+          <Button type="primary" size="small" style="float:right" @click="settingServe(item[0])" :loading-text="loadingText"  :disabled="disabled" :loading="loading"
+            >{{ $t('diskStatus.title[4]') }}</Button
+          >
+        </div>
+        <!-- <p style="margin:0px;padding-top:5px;">服务器状态：启用</p> -->
+      </template>
+    </Cell>
+  </CellGroup>
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { CellGroup, Cell, Button, Toast ,Dialog} from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const i8nStateName = t('diskStatus.stateName');
+
+// 标题
+const navTitle = ref(t("diskStatus.navTitle"));
+const disabled = ref(false);
+const loading = ref(false);
+const loadingText = ref(t("diskStatus.load"))
+const diskInfo = ref([]);
+const diskState = ["withoulock","NoDisk","DiskNoformat","DiskStateError","DiskNormal"];
+
+const settingServe = (e) => {
+  disabled.value = true;
+  loading.value = true;
+  FormatClick(e);
+  Dialog.alert({
+    title: t("diskStatus.alert[0]"),
+    message: t("diskStatus.alert[1]"),
+    confirmButtonText:t("diskStatus.tipsConfirm"),
+  })
+  setTimeout(() => {
+    disabled.value = false;
+    loading.value = false;
+  },3000);
+};
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+function filterDiskState(name) {
+  let ti = "";
+  const stateName = i8nStateName.split(",");
+  let state = diskState.indexOf(name);
+  if(state !== -1) {
+    ti = stateName[state]
+  } else {
+    ti = "--";
+  }
+  return ti;
+}
+
+function FormatClick(title) {
+    if(title == "SD1") {
+      postAN.ANSend("$FORMAT,2");
+    } else if(title == "SD2") {
+      postAN.ANSend("$FORMAT,3");
+    }
+}
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  if(str == ";") {
+    return false;
+  }
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  
+  var cmd = [];
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("*");
+    cmd.push(item);
+  }
+  diskInfo.value = cmd;
+  console.log(cmd);
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t('toast[1]'));
+  } else {
+    Toast.fail(t('toast[2]'));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  postAN.ANSend(param[1]);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style scoped>
+</style>

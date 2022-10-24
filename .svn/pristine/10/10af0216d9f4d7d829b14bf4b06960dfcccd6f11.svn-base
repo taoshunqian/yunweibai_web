@@ -1,0 +1,82 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">启用</label>
+        <Checkbox
+          v-model="checked"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="注册">
+      <template #right-icon>
+        <RadioGroup v-model="checked">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >自动</Radio
+          >
+          <Radio name="2" shape="square" icon-size="15px">手动</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Field label="IP/域名" placeholder="请输入IP/域名" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="端口"
+      placeholder="请输入端口"
+      type="digit"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="协议类型" placeholder="请选择协议类型" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="平台类型" placeholder="请输入子网掩码" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="地方标准" placeholder="请输入默认网关" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="状态" value="在线">
+    </Cell>
+  </CellGroup>
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { CellGroup, Field, Radio, RadioGroup, Cell, Checkbox } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("服务器详细");
+
+const checked = ref("1");
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style>
+</style>

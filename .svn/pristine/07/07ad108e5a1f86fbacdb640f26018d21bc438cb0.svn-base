@@ -1,0 +1,89 @@
+<template>
+  <Sticky position="bottom" :offset-bottom="0" class="stickyBottom">
+    <Button
+      plain
+      type="primary"
+      size="small"
+      style="width: 28%; margin-right: 20px; border-radius: 5px"
+      @click="setup"
+      :disabled="disabled"
+      :loading="loading"
+      >上一步</Button
+    >
+    <Button
+      type="primary"
+      size="small"
+      style="width: 25%; margin-right: 20px; border-radius: 5px"
+      @click="submit"
+      :disabled="disabled"
+      :loading="loading"
+      >保存</Button
+    >
+    <Button
+      plain
+      type="primary"
+      size="small"
+      style="width: 28%; border-radius: 5px"
+      @click="next"
+      :disabled="disabled"
+      :loading="loading"
+      >下一步</Button
+    >
+  </Sticky>
+</template>
+
+
+<script setup>
+import router from "@/router";
+import { Button, Sticky } from "vant";
+import { defineComponent, ref } from "vue";
+
+// const porps = defineProps(["navTitle", "leftArrow"]);
+
+const disabled = ref(false);
+const loading = ref(false);
+
+const routers = router.getRoutes();
+console.log(routers);
+
+// 上一步
+const setup = () => {
+  setDisabled();
+};
+
+// 保存
+const submit = () => {
+    setDisabled();
+};
+
+// 下一步
+const next = () => {
+    setDisabled();
+};
+
+// 设置禁用
+const setDisabled = () => {
+  disabled.value = true;
+  loading.value = true;
+  setTimeout(() => {
+    disabled.value = false;
+    loading.value = false;
+  }, 1000);
+};
+
+defineComponent({
+  name: "component-stickyBottom",
+});
+</script>
+
+<style>
+.stickyBottom {
+  position: fixed;
+  width: 100%;
+  left: 0px;
+  bottom: 0px;
+  padding: 10px 10px 20px;
+  border-top: 1px solid #cdcdcd;
+  background: white;
+}
+</style>

@@ -1,0 +1,412 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+  <!-- 是否启用 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">{{
+          $t("alarmInfo.label[0]")
+        }}</label>
+        <Checkbox
+          v-model="setAlarmInfo[1]"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 蜂鸣器是否启用 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">{{
+          $t("alarmInfo.label[1]")
+        }}</label>
+        <Checkbox
+          v-model="setAlarmInfo[2]"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 事件名称 -->
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('alarmInfo.label[2]')"
+      :placeholder="$t('alarmInfo.placeholder[0]')"
+      input-align="right"
+      v-model="setAlarmInfo[4]"
+    />
+  </CellGroup>
+  <!-- 类型 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('alarmInfo.label[3]')">
+      <template #right-icon>
+        <RadioGroup v-model="setAlarmInfo[6]">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >{{ $t("alarmInfo.radio[0]") }}</Radio
+          >
+          <Radio name="0" shape="square" icon-size="15px">{{
+            $t("alarmInfo.radio[1]")
+          }}</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 逻辑反 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('alarmInfo.label[10]')">
+      <template #right-icon>
+        <RadioGroup v-model="setAlarmInfo[7]">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >{{  $t("alarmInfo.logical[0]")  }}</Radio
+          >
+          <Radio name="0" shape="square" icon-size="15px">{{ $t("alarmInfo.logical[1]")  }}</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 画面切换通道 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="$t('alarmInfo.label[11]')"
+      is-link
+      :value="channel"
+      @click="showPickerFn(3)"
+    />
+  </CellGroup>
+  <!-- 延时 -->
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('alarmInfo.label[4]')"
+      :placeholder="$t('alarmInfo.placeholder[1]')"
+      type="digit"
+      input-align="right"
+      v-model="setAlarmInfo[8]"
+    >
+      <template #button>
+        <label>S</label>
+      </template>
+    </Field>
+  </CellGroup>
+  <!-- 上报类型 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="$t('alarmInfo.label[5]')"
+      is-link
+      :value="type"
+      @click="showPickerFn(1)"
+    />
+  </CellGroup>
+  <!-- 抓拍模式 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="$t('alarmInfo.label[6]')"
+      is-link
+      :value="model"
+      @click="showPickerFn(2)"
+    />
+  </CellGroup>
+  <!-- 连拍张数 -->
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('alarmInfo.label[7]')"
+      :placeholder="$t('alarmInfo.placeholder[2]')"
+      label-width="200"
+      type="digit"
+      input-align="right"
+      v-model="setAlarmInfo[12]"
+    />
+  </CellGroup>
+  <!-- 连拍间隔 -->
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('alarmInfo.label[8]')"
+      :placeholder="$t('alarmInfo.placeholder[3]')"
+      type="digit"
+      input-align="right"
+      v-model="setAlarmInfo[13]"
+      :disabled="inputDisabled"
+    />
+  </CellGroup>
+  <!-- 报警录像通道号 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('alarmInfo.label[12]')">
+      <template #right-icon>
+        <CheckboxGroup v-model="alarmChannel">
+          <Checkbox
+            :name="index + 1"
+            shape="square"
+            style="float: left; margin-right: 3px"
+            icon-size="15px"
+            v-for="(item, index) in 8"
+            :key="index"
+            >{{ index + 1 }}</Checkbox
+          >
+        </CheckboxGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 抓拍通道号 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('alarmInfo.label[13]')">
+      <template #right-icon>
+        <CheckboxGroup v-model="graspChannel">
+          <Checkbox
+            :name="index + 1"
+            shape="square"
+            style="float: left; margin-right: 3px"
+            icon-size="15px"
+            v-for="(item, index) in 8"
+            :key="index"
+            >{{ index + 1 }}</Checkbox
+          >
+        </CheckboxGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+  
+  <!-- 弹出层 -->
+  <Popup round v-model:show="showPicker" position="bottom">
+    <!-- :title="$t('alarmInfo.label[9]')" -->
+    <Picker
+      :default-index="defaultIndex"
+      :columns="columns"
+      @cancel="showPicker = false"
+      @confirm="onConfirm"
+    />
+  </Popup>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  CellGroup,
+  Cell,
+  Toast,
+  Checkbox,
+  CheckboxGroup,
+  RadioGroup,
+  Radio,
+  Field,
+  Popup,
+  Picker,
+} from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { postAN } from "@/utlis/AdApi";
+// import { getQueryString } from "@/utlis/QueryStr";
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const i8nColumns2 = t("alarmInfo.columns2");
+const i8nColumns3 = t("alarmInfo.columns3");
+
+let route = useRoute();
+const item = route.query.item; // 正在使用的指令
+const allAlarm = route.query.allAlarm; // 完整的指令
+const index = route.query.index; // 使用的指令段
+const cmd = route.query.cmd; // 使用的指令头
+
+const columns = ref([]);
+const columns2 = ref(i8nColumns2.split(","));
+const columns3 = ref(i8nColumns3.split(","));
+const channelColumns3 = [];
+for (var i = 1; i < 9; i++) {
+  channelColumns3.push("AV " + i);
+}
+
+//  报警录像通道号 抓拍通道号
+
+// 标题
+const navTitle = ref(t("alarmInfo.navTitle") + " " + (+index + 1));
+const setAlarmInfo = ref(item);
+const defaultIndex = ref(1);
+const showPicker = ref(false);
+const type = ref("");
+const model = ref("");
+const channel = ref(""); // 画面切换通道
+const alarmChannel = ref([]); // 报警录像通道号
+const graspChannel = ref([]); // 抓拍通道号
+const statePocker = ref(1); 
+const inputDisabled = ref(true);
+
+type.value = columns2.value[setAlarmInfo.value[9]];
+model.value = columns3.value[setAlarmInfo.value[11]];
+
+// 查询
+const BottomSearch = () => {
+  Toast(t("toast[0]"));
+  postAN.ANSend(cmd);
+  return false;
+};
+
+// 保存
+const BottomSubmit = () => {
+  let alarm = [...setAlarmInfo.value];
+
+  alarm[1] = +alarm[1];
+  alarm[9] = columns2.value.indexOf(type.value);
+  alarm[11] = columns3.value.indexOf(model.value);
+  alarm[3] = +channel.value.split(" ")[1] - 1; // 画面切换通道
+
+  alarm[5] = byteChange(alarmChannel.value); // 报警录像通道号
+  alarm[10] = byteChange(graspChannel.value); // 抓拍通道号
+
+  allAlarm[index] = alarm;
+  var cmds =
+    cmd + "," + allAlarm.join("!").replace(/,/g, "~").replace(/!/g, ",");
+  postAN.ANsendSetting(cmds);
+  // console.log(cmds);
+  return false;
+};
+
+// 控制显示的 columns
+const showPickerFn = (num) => {
+  if (num == 1) {
+    columns.value = columns2;
+    defaultIndex.value = columns2.value.indexOf(type.value);
+  } else if (num == 2) {
+    columns.value = columns3;
+    defaultIndex.value = columns3.value.indexOf(model.value);
+  } else if (num == 3) {
+    // 画面切换通道
+    columns.value = channelColumns3;
+    defaultIndex.value = channelColumns3.indexOf(channel.value);
+  }
+  statePocker.value = num;
+  showPicker.value = true;
+};
+
+// 选择器
+const onConfirm = (value) => {
+  showPicker.value = false;
+  if (statePocker.value == 1) {
+    // 上报类型
+    type.value = value;
+  } else if (statePocker.value == 2) {
+    // 抓拍模式
+    model.value = value;
+    let select = columns3.value.indexOf(model.value);
+    // console.log(select);
+    inputDisabled.value = true;
+    if (select == 0) {
+      setAlarmInfo.value[12] = 1;
+    } else if (select == 1) {
+      setAlarmInfo.value[12] = 2;
+    } else if (select == 2) {
+      inputDisabled.value = false;
+    }
+  } else if (statePocker.value == 3) {
+    // 画面切换通道
+    channel.value = value;
+  }
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-Alarm",
+});
+
+// 十进制转二进制 8位
+const baseChange = (value) => {
+  var leng = value.length;
+  var number = 8 - leng;
+  var str = "";
+  for(var i = 0;i< number;i++) {
+    str += "0";
+  }
+  str += value;
+  var select = str.split("");
+  var selectItem = [];
+  console.log(select);
+  for(var j=0;j< select.length;j++) {
+    if(select[j] != "0") {
+      selectItem.push(j + 1)
+    }
+  }
+  return selectItem;
+}
+// 二进制转十进制
+const byteChange = (value) => {
+  var arr = new Array(9);
+  var str = "";
+  for(var i=1;i<arr.length;i++) {
+    if(value.indexOf(i)) {
+      str += "0";
+    } else {
+      str += "1";
+    }
+  }
+  var val = parseInt(str, 2);
+  return val;
+}
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(2);
+  const alarmArr = [];
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("~");
+    alarmArr.push(item);
+  }
+  setAlarmInfo.value = alarmArr[index];
+  type.value = columns2.value[setAlarmInfo.value[9]]; // 类型
+  model.value = columns3.value[setAlarmInfo.value[11]]; // 模式
+  channel.value = "AV " + (+setAlarmInfo.value[3] + 1);  // 画面切换通道
+
+  var alarmChannelStr = new Number(+setAlarmInfo.value[5]).toString(2);
+  alarmChannel.value = baseChange(alarmChannelStr); // 报警录像通道号
+  var graspChannelStr = new Number(+setAlarmInfo.value[10]).toString(2);
+  graspChannel.value = baseChange(graspChannelStr); // 抓拍通道号
+};
+
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// // 向安卓发送指令
+const androidStatus_fn = () => {
+  // var param = getQueryString("param").split("@"); // 解析出指令
+  postAN.ANSend(cmd);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

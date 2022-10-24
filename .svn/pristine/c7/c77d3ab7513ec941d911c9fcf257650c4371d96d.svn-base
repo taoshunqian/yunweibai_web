@@ -1,0 +1,66 @@
+<template>
+  <router-view></router-view>
+</template>
+
+<script setup>
+import router from "@/router";
+import { defineComponent, provide , ref} from "vue";
+import { getQueryString } from "@/utlis/QueryStr";
+import { useI18n } from 'vue-i18n';
+const { locale } = useI18n();
+
+// 全局控制 参数 -------------------
+/*
+  逻辑概况说明: 
+  1. 向导模式 [ 国内 国际 ]
+  2. 普通模式 [ 国内 国际 ]
+  3. locale : 版本    : false === 国内版  true === 国际版, 
+  4. guide : 向导模式 ： true === 向导模式  false === 普通模式
+  5. [多条指令  单条指令]
+*/ 
+const model = true; // 生产 true 测试 false
+const lang = ref(true) //  false === 国内版  true === 国际版
+
+// ---------------------------------
+
+console.log("version: 0.0.4");
+
+console.log(window.location.href);
+
+try {
+  // 生产模式
+  if (model) {
+    var hash = getQueryString("hash");
+    router.push("/" + hash); // 跳转路由
+    locale.value = getQueryString("la"); // 设置语言
+
+    console.log(locale.value)
+    lang.value = locale.value == "en" ? false : true; // true 当前为国际版  false 为国内版
+  } else { // 测试模式
+    var route = getQueryString("hash")
+    console.log("/" + route);
+    router.push("/" + route);
+  }
+} catch (e) {
+  console.warn(e);
+}
+
+// 全局路由和组件可用
+provide('lang', { lang });
+
+defineComponent({
+  name: "app",
+});
+</script>
+
+<style>
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f7f8fa;
+  min-height: 92vh;
+  padding-bottom: 8vh;
+  /* overflow: hidden; */
+}
+</style>

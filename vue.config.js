@@ -1,0 +1,34 @@
+const { defineConfig } = require('@vue/cli-service')
+
+function formartDate() {
+  var dates = new Date();
+  // 2020-2-2 21:30:21
+  // 月
+  var month = dates.getMonth() + 1
+  month = month < 10 ? "0" + month : month
+  // 日
+  var date = dates.getDate()
+  date = date < 10 ? "0" + date : date
+  // 时
+  var hours = dates.getHours()
+  hours = hours < 10 ? "0" + hours : hours
+  // 分
+  var minutes = dates.getMinutes()
+  minutes = minutes < 10 ? "0" + minutes : minutes
+  // 秒
+  var seconds = dates.getSeconds()
+  seconds = seconds < 10 ? "0" + seconds : seconds
+  var arr = [
+    month,
+    date,
+    hours,
+    minutes,
+    seconds
+  ]
+  return arr.join('')
+}
+module.exports = defineConfig({
+  transpileDependencies: true,
+  outputDir: 'ywb' + formartDate(),
+  publicPath: './'
+})

@@ -1,0 +1,210 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">启用</label>
+        <Checkbox
+          v-model="setAlarmInfo[1]"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">蜂鸣器</label>
+        <Checkbox
+        v-model="setAlarmInfo[2]"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="事件名称" placeholder="请输入事件名称" input-align="right" v-model="setAlarmInfo[4]" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="类型">
+      <template #right-icon>
+        <RadioGroup v-model="setAlarmInfo[6]">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >正触发</Radio
+          >
+          <Radio name="0" shape="square" icon-size="15px">负触发</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="延时"
+      placeholder="请输入延时"
+      type="digit"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell title="上报类型" is-link />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell title="抓拍模式" is-link />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="连拍张数"
+      placeholder="请输入连拍张数"
+      type="digit"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="连拍间隔"
+      placeholder="请输入连拍间隔"
+      type="digit"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <StickyBottom />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  CellGroup,
+  Cell,
+  Toast,
+  Checkbox,
+  RadioGroup,
+  Radio,
+  Field,
+} from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+// import { postAN } from "@/utlis/AdApi";
+// import { getQueryString } from "@/utlis/QueryStr";
+
+let route = useRoute();
+const item = route.query.item;
+console.log(item[0]);
+
+
+// 标题
+const navTitle = ref("报警输入状态");
+const setAlarmInfo = ref(item);
+const alarmInfo = ref([]);
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-Alarm",
+});
+
+// const startFn = (e) => {
+//   let str = "";
+//   if (e == "0") {
+//     str = "不启用";
+//   } else if (e == "1") {
+//     str = "启用";
+//   }
+//   return str;
+// };
+
+// const typeFn = (e) => {
+//   let str = "";
+//   if (e == "0") {
+//     str = "负触发";
+//   } else if (e == "1") {
+//     str = "正触发";
+//   }
+//   return str;
+// };
+
+// const alarmFn = (e) => {
+//   let str = "";
+//   if (e == "0") {
+//     str = "不上报";
+//   } else if (e == "1") {
+//     str = "正常";
+//   } else if (e == "2") {
+//     str = "不报警";
+//   }
+//   return str;
+// };
+
+// const cameraTypeFn = (e) => {
+//   let str = "";
+//   if (e == "0") {
+//     str = "单拍";
+//   } else if (e == "1") {
+//     str = "双拍";
+//   } else if (e == "2") {
+//     str = "连拍";
+//   }
+//   return str;
+// };
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(2);
+  const alarmArr = [];
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("~");
+    alarmArr.push(item);
+  }
+  alarmInfo.value = alarmArr;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// // 向安卓发送指令
+// const androidStatus_fn = () => {
+//   var param = getQueryString("param").split("@"); // 解析出指令
+//   postAN.ANSend(param[1]);
+// };
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  //   androidStatus_fn();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

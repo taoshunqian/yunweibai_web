@@ -1,0 +1,17 @@
+
+export class postAN {
+    static ANSend(cmd) {
+        console.log("发送指令 " + cmd);
+        try {
+            // eslint-disable-next-line no-undef
+            AN.sendSelect(cmd);
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    static  ANsendSetting(cmds) {
+        console.log(cmds);
+        // eslint-disable-next-line no-undef
+        AN.sendSetting(cmds);
+    }
+}

@@ -1,0 +1,142 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">启用</label>
+        <Checkbox
+          v-model="checked"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="注册">
+      <template #right-icon>
+        <RadioGroup v-model="ServeInfo[4]">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >自动</Radio
+          >
+          <Radio name="0" shape="square" icon-size="15px">手动</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Field label="IP/域名" placeholder="请输入IP/域名" input-align="right" v-model="ServeInfo[1]" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="端口"
+      placeholder="请输入端口"
+      type="digit"
+      input-align="right"
+      v-model="ServeInfo[2]"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="协议类型" is-link  @click="showPickerFn(1)" :value="ServeInfo[5]" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="平台类型" is-link @click="showPickerFn(2)" :value="ServeInfo[6]" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="地方标准" is-link  @click="showPickerFn(3)" :value="ServeInfo[7]" />
+  </CellGroup>
+
+  <Popup round v-model:show="showPicker"  position="bottom">
+    <Picker title="协议类型" :default-index="1" :columns="columns" @cancel="showPicker = false" @confirm="onConfirm" />
+  </Popup>
+
+  <StickyBottom />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { useRoute } from "vue-router";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  CellGroup,
+  Field,
+  Radio,
+  RadioGroup,
+  Cell,
+  Checkbox,
+  Picker,
+  Popup,
+} from "vant"; // Checkbox
+import { defineComponent, ref,onMounted } from "vue";
+
+let route = useRoute();
+const item = route.query.item;
+
+const index = +route.query.index + 1;
+const columns = ref([]);
+
+const columns2 = ref(["JT808-2013","JT808-2019","JT808-2011","JT905"]);
+const columns3 = ref(["808标准协议平台","通天星","三一","星冠","超越","云科","东莞亿程","中车","厦门瑞讯"]);
+const columns4 = ref(["江苏","广东","新川标","陕西"]);
+
+const defaultIndex = ref(1);
+const ServeInfo = ref(item);
+const showPicker = ref(false);
+const navTitle = ref("服务器 " + index); // 标题
+const checked = ref(true);
+const statePocker = ref(1);
+
+
+
+function showPickerFn(num) {
+  if(num == 1) { // 协议类型
+    columns.value = columns2.value;
+    defaultIndex.value = ServeInfo.value[5];
+  } else if(num == 2) { // 平台类型
+    columns.value = columns3.value;
+    defaultIndex.value = ServeInfo.value[6];
+  } else {
+    columns.value = columns4.value;
+    defaultIndex.value = ServeInfo.value[7];
+  }
+  showPicker.value = true;
+  statePocker.value = num;
+  
+}
+
+const onConfirm = (value) => {
+  showPicker.value = false;
+  if(statePocker.value == 1) {
+    ServeInfo.value[5] = value
+  } else if(statePocker.value == 2) {
+    ServeInfo.value[6] = value
+  } else {
+    ServeInfo.value[7] = value
+  }
+}
+onMounted(() => {
+  checked.value = !!+ServeInfo.value[3];
+  ServeInfo.value[5] = columns2.value[ServeInfo.value[5]];
+  ServeInfo.value[6] = columns3.value[ServeInfo.value[6]];
+  ServeInfo.value[7] = columns4.value[ServeInfo.value[7]];
+})
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style>
+</style>

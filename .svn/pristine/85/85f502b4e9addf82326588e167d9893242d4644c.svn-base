@@ -1,0 +1,47 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">启用</label>
+        <Checkbox
+          v-model="checked"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+
+        <p style="margin: 0px; padding-top: 5px">
+          模块类型: <span style="padding-left: 10px">{{ model }}</span>
+        </p>
+      </template>
+      <template #right-icon>
+        <label style="float: left; margin-right: 10px">{{ warrant }}</label>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom :guide="guide" @BottomNext="BottomNext" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Checkbox } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("WIFI设置");
+
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+</script>
+
+<style>
+* {
+}
+</style>

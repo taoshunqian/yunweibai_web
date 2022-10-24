@@ -1,0 +1,78 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="当前油位" placeholder="请输入当前油位" input-align="right">
+      <template #button>
+        <span>%</span>
+      </template></Field
+    >
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="当前油量" placeholder="请输入当前油量" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="总容量" placeholder="请输入总容量" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="标定数目" placeholder="请输入标定数目" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      label="传感器最大值"
+      placeholder="请输入传感器数据最大值"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="报警阈值" placeholder="请输入报警阈值" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Cell title="类型" is-link :value="deviceCamera" @click="showPickerFn" />
+  </CellGroup>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Toast, Field } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("油感传感器");
+const StateDisabled = ref(true);
+const showPicker = ref(false); // 弹出层是否显示
+const deviceCamera = ref("");
+
+const showPickerFn = () => {
+  if (StateDisabled.value) {
+    Toast("该摄像头不支持设置分辨率");
+    return false;
+  }
+  showPicker.value = true;
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-Alarm",
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

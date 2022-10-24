@@ -1,0 +1,220 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+  <CellGroup
+    inset
+    style="margin: 10px"
+    class="cellGroup"
+    v-for="(item, index) in diskInfo"
+    :key="index"
+  >
+    <Cell>
+      <template #title>
+        <label style="margin-right: 10px; font-size: 13px"
+          >{{ $t("diskStatus.title[0]") }}: {{ item[0] }}</label
+        >
+        <p style="margin: 0px; padding-top: 15px; font-size: 13px">
+          {{ $t("diskStatus.title[1]") }}:
+          <span
+            :style="{ color: item[1] == 'DiskNormal' ? '#5fb878' : 'red' }"
+            >{{ filterDiskState(item[1]) }}</span
+          >
+        </p>
+      </template>
+
+      <template #right-icon>
+        <!-- width:50%; -->
+        <div style="font-size: 13px;">
+          <p style="margin-top: 8px">
+            {{ $t("diskStatus.title[2]") }}:
+            <span style="color: #5fb878"> {{ item[2] }} </span>
+          </p>
+          <p style="margin-top: 2px">
+            {{ $t("diskStatus.title[3]") }}:
+            <span style="color: #5fb878"> {{ item[3] }} </span>
+          </p>
+
+          <Button
+            type="primary"
+            size="small"
+            style="float: right"
+            @click="settingServe(item[0])"
+            :loading-text="loadingText"
+            :disabled="disabled"
+            :loading=" loadingActive == item[0] ? true : false"
+            >{{ $t("diskStatus.title[4]") }}</Button
+          >
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { CellGroup, Cell, Button, Toast, Dialog } from "vant"; // Checkbox Dialog
+import { defineComponent, ref, onMounted, onDeactivated } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const i8nStateName = t("diskStatus.stateName");
+let timer;
+let timeState = ref(9);
+// 标题
+const navTitle = ref(t("diskStatus.navTitle"));
+const disabled = ref(false);
+const loadingActive = ref("");
+const loadingDisabled = ref(false);
+const titlelabel = ref("");
+const loadingText = ref(t("diskStatus.load"));
+const diskInfo = ref([]);
+const itemState = ref(0);
+const diskState = [
+  "withoulock",
+  "NoDisk",
+  "DiskNoformat",
+  "DiskStateError",
+  "DiskNormal",
+];
+
+const settingServe = (e) => {
+  disabled.value = true;
+  loadingActive.value = e;
+  FormatClick(e);
+  setTimeout(() => {
+    disabled.value = false;
+  }, 3000);
+};
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+function filterDiskState(name) {
+  let ti = "";
+  const stateName = i8nStateName.split(",");
+  let state = diskState.indexOf(name);
+  if (state !== -1) {
+    ti = stateName[state];
+  } else {
+    ti = "--";
+  }
+  return ti;
+}
+
+let number = 0;
+
+function FormatClick(title) {
+  titlelabel.value = title;
+  if (title == "SD1") {
+    postAN.ANSend("$FORMAT,2");
+    itemState.value = 2;
+  } else if (title == "SD2") {
+    postAN.ANSend("$FORMAT,3");
+    itemState.value = 3;
+  } else if (title == "HDD") {
+    postAN.ANSend("$FORMAT,1");
+    itemState.value = 1;
+  }
+  // var num = 0;
+  Toast.loading({
+    message: titlelabel.value + " " + t("diskStatus.alertMsg[1]"),
+    forbidClick: true,
+    loadingType: "spinner",
+    duration: 0,
+  });
+  timeState.value = 9;
+  loadingDisabled.value = true;
+  timer = setInterval(() => {
+    number++;
+    if (number == 30) {
+      clearInterval(timer);
+      Toast.clear();
+    }
+    if (timeState.value == 2 || timeState.value == 0) {
+      clearInterval(timer);
+      Toast.clear();
+      loadingDisabled.value = false;
+      Dialog.alert({
+        title: t("diskStatus.alert[0]"),
+        message:
+          titlelabel.value +
+          " " +
+          t("diskStatus.alertMsg[" + timeState.value + "]"),
+        confirmButtonText: t("diskStatus.tipsConfirm"),
+      });
+    } else {
+      postAN.ANSend("$FORMATSTATUS");
+    }
+  }, 2 * 1000);
+}
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  Toast.clear();
+  console.log("res ------------" + str);
+  if (str.indexOf("FORMATSTATUS") !== -1) {
+    console.log("res ------------" + str);
+    var state = str.split(";")[0];
+    var stateArr = state.split(",");
+    timeState.value = stateArr[itemState.value];
+    Toast.clear();
+    if (loadingDisabled.value == true) {
+      Toast.loading({
+        message:
+          titlelabel.value +
+          " " +
+          t("diskStatus.alertMsg[" + timeState.value + "]"),
+        forbidClick: true,
+        loadingType: "spinner",
+        duration: 0,
+      });
+    }
+
+    return false;
+  }
+  if (str == ";") {
+    return false;
+  }
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+
+  var cmd = [];
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("*");
+    cmd.push(item);
+  }
+  diskInfo.value = cmd;
+  // console.log(cmd);
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  postAN.ANSend(param[1]);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+onDeactivated(() => {
+  clearInterval(timer);
+  Toast.clear();
+});
+</script>
+
+<style scoped>
+</style>

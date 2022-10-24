@@ -1,0 +1,38 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin-top: 10px" v-for="(item,index) in 3" :key="index">
+    <Collapse v-model="activeNames">
+      <CollapseItem :title="'平台' + item" :name=" '' + (index + 1) ">
+        <Cell title="服务器" value="启用"></Cell>
+        <Cell title="服务器IP" value="100.00.00"></Cell>
+        <Cell title="SIM卡" value="锁定"></Cell>
+        <Cell title="服务器端口" value="9337"></Cell>
+        <Cell title="协议类型" value="JT808-2013"></Cell>
+        <Cell title="平台类型" value="808"></Cell>
+        <Cell title="地方标准" value="江苏"></Cell>
+        <Cell title="设备" value="在线/离线"></Cell>
+      </CollapseItem>
+    </Collapse>
+  </CellGroup>
+
+  <StickyBottom />
+  
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Collapse, CollapseItem, CellGroup,Cell } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("平台状态");
+const activeNames = ref(["1"]);
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style scoped>
+</style>

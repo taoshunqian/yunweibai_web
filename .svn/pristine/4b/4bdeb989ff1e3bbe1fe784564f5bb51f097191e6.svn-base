@@ -1,0 +1,91 @@
+
+function browserVersion() {
+    var u = navigator.userAgent;
+    return {//移动终端浏览器版本信息
+        trident: u.indexOf('Trident') > -1, //IE内核
+        presto: u.indexOf('Presto') > -1, //opera内核
+        webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+        gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+        mobile: !!u.match(/AppleWebKit.*Mobile.*/) || !!u.match(/AppleWebKit/), //是否为移动终端
+        ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+        android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或者uc浏览器
+        iPhone: u.indexOf('iPhone') > -1 || u.indexOf('Mac') > -1, //是否为iPhone或者QQHD浏览器
+        iPad: u.indexOf('iPad') > -1, //是否iPad
+        webApp: u.indexOf('Safari') == -1 //是否web应该程序，没有头部与底部
+    };
+}
+const browser = browserVersion();
+
+export class postAN {
+
+    static ANSend(cmd) {
+        console.log("发送指令 " + cmd);
+
+        try {
+            if (browser.android) {
+                // eslint-disable-next-line no-undef
+                AN.sendSelect(cmd);
+            } else {
+                // eslint-disable-next-line no-undef
+                JsLog.postMessage(browser.android)
+                // eslint-disable-next-line no-undef
+                IosSendSelect.postMessage(cmd);
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    static ANsendSetting(cmds) {
+
+        if (browser.android) {
+            // eslint-disable-next-line no-undef
+            AN.sendSetting(cmds);
+        } else {
+            // eslint-disable-next-line no-undef
+            JsLog.postMessage("cmd --------" + cmd);
+            // eslint-disable-next-line no-undef
+            IosSendSetting.postMessage(cmd);
+        }
+
+    }
+    static ANsendSelectPhoto(image) {
+        // eslint-disable-next-line no-undef
+        AN.sendSelectPhoto("$SNAPSHOT," + image + ",5");
+    }
+    // 安卓标定
+    static calibrationFn(num, cmds) {
+        var title = "";
+        var cmd = "";
+        switch (num) {
+            case 1:
+                title = "ADAS";
+                cmd = "ADAS";
+                break;
+            case 2:
+                title = "DSM 1";
+                cmd = "DSM1";
+                break;
+            case 3:
+                title = "DSM 2";
+                cmd = "DSM2";
+                break;
+        }
+        // console.log(cmds);
+        // eslint-disable-next-line no-undef
+        AN.startAI(title, cmd, cmds);
+
+    }
+    static finishWeb() {
+
+        if (browser.android) {
+            // eslint-disable-next-line no-undef
+            AN.finishWeb();
+        } else {
+            // eslint-disable-next-line no-undef
+            // JsLog.postMessage("55555")
+            // eslint-disable-next-line no-undef
+            IosFinishWeb.postMessage("2222");
+        }
+
+    }
+}

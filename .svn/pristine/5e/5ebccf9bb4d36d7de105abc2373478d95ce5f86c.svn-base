@@ -1,0 +1,244 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    style="margin-top: 10px"
+    v-for="(item, index) in getResultCmds"
+    :key="index"
+  >
+    <Collapse v-model="activeNames">
+      <CollapseItem
+        :title="$t('platformStatus.title[0]') + (index + 1)"
+        :name="'' + (index + 1)"
+      >
+        <Cell :title="$t('platformStatus.title[1]')" :value="item[1]"></Cell>
+        <Cell :title="$t('platformStatus.title[2]')" :value="item[2]"></Cell>
+
+        <Cell :title="$t('platformStatus.title[3]')">
+          <template #right-icon>
+            <span :style="{ color: item[3] == 1 ? '#5fb878' : 'red' }">{{
+              filterStartState(item[3])
+            }}</span>
+          </template>
+        </Cell>
+
+        <Cell
+          :title="$t('platformStatus.title[4]')"
+          :value="filterLogonState(item[4])"
+        ></Cell>
+
+        <Cell
+          :title="$t('platformStatus.title[5]')"
+          :value="columns2[item[5]]"
+        ></Cell>
+        <Cell
+          :title="$t('platformStatus.title[6]')"
+          :value="columns3[item[6]]"
+        ></Cell>
+        <Cell
+          :title="$t('platformStatus.title[7]')"
+          :value="columns4[item[7]]"
+        ></Cell>
+
+        <Cell :title="$t('platformStatus.title[8]')">
+          <template #right-icon>
+            <span
+              :style="{
+                color:
+                  deviceState[index]  == 1 ? '#5fb878' : 'red',
+              }"
+              >{{ filterDeviceState(deviceState[index]) }}
+              </span
+            >
+          </template></Cell
+        >
+      </CollapseItem>
+    </Collapse>
+  </CellGroup>
+
+  <!-- <StickyBottom /> -->
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+// import StickyBottom from "@/components/stickyBottom.vue";
+import { Collapse, CollapseItem, CellGroup, Cell, Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted, inject } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+const { lang } = inject("lang");
+const International = ref(lang.value);
+console.log(International);
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const i8nColumns3 = t("platformStatus.columns3");
+const i8nColumns4 = t("platformStatus.columns4");
+
+// 标题
+const navTitle = ref(t("platformStatus.navTitle"));
+const activeNames = ref(["1"]);
+const maxNum = ref(0);
+const deviceState = ref([]);
+const sendNum = ref(1);
+const resultAll = ref("");
+const jtsvrStatus = ref([]);
+const columns2 = ref(["JT808-2013", "JT808-2019", "JT808-2011", "JT905"]);
+const columns3 = ref(i8nColumns3.split(","));
+const columns4 = ref(i8nColumns4.split(","));
+
+// const cmds = ref(["$JTSVR2,","$JTSVR3,","$JTSVR4,","$JTSVR5,","$NETSTATE"])
+const getResultCmds = ref([]);
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+// const settingServe = (e,index) => {
+//   console.log(e);
+//   router.push({
+//     path: "/ServeInfo",
+//     query: {
+//       item: e,
+//       index
+//     },
+//   });
+// };
+
+function filterStartState(name) {
+  let ti = "";
+
+  switch (name) {
+    case "1":
+      ti = t("platformStatus.serveState[0]");
+      break;
+    case "0":
+      ti = t("platformStatus.serveState[1]");
+      break;
+    default:
+      ti = t("platformStatus.serveState[2]");
+  }
+  return ti;
+}
+
+function filterDeviceState(name) {
+  let ti = "";
+  switch (name) {
+    case "1":
+      ti = t("platformStatus.deviceState[0]");
+      break;
+    case "0":
+      ti = t("platformStatus.deviceState[1]");
+      break;
+    default:
+      ti = t("platformStatus.deviceState[2]");
+  }
+  return ti;
+}
+
+function filterLogonState(name) {
+  let ti = "";
+  switch (name) {
+    case "1":
+      ti = t("platformStatus.logonState[0]");
+      break;
+    case "0":
+      ti = t("platformStatus.logonState[1]");
+      break;
+    default:
+      ti = t("platformStatus.logonState[2]");
+  }
+  return ti;
+}
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  // console.log(cmds);
+  if (cmds.indexOf("JTNUM") !== -1) {
+    maxNum.value = cmds.split(",")[1];
+    if (sendNum.value == 1) {
+      postAN.ANSend("$JTSVR");
+    }
+    return false;
+  }
+
+  if (sendNum.value == +maxNum.value + 1) {
+    resultAll.value += cmds;
+    var cmd = [];
+    var items = resultAll.value.split("!");
+    var devices = items[items.length - 1].split(",");
+
+    var state = [];
+    for (var k = 0; k < devices.length; k++) {
+      if (devices[k].indexOf("JTSVR") !== -1) {
+        state.push(devices[k].split("*")[1]);
+      }
+    }
+    // console.log(state);
+    deviceState.value = state;
+
+    var net = cmds.split(",");
+    var jtsvrState = [];
+    for (var j = 0; j < net.length; j++) {
+      if (net[j].indexOf("JTSVR") !== -1) {
+        jtsvrState.push(net[j]);
+      }
+    }
+    // console.log(jtsvrState);
+    jtsvrStatus.value = jtsvrState;
+    for (var i = 0; i < items.length - 1; i++) {
+      var item = items[i].split(",");
+      cmd.push(item);
+    }
+    getResultCmds.value = cmd;
+    return false;
+  }
+  resultAll.value += cmds + "!";
+  if (sendNum.value == maxNum.value) {
+    postAN.ANSend("$NETSTATEV3");
+  } else {
+    if (sendNum.value <= maxNum.value) {
+      postAN.ANSend("$JTSVR" + [sendNum.value + 1]);
+    }
+  }
+  sendNum.value++;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  // alert(param);
+  if (param[7] != undefined) {
+    return false;
+  }
+  postAN.ANSend("$JTNUM");
+  // postAN.ANSend(param[1]);
+  // postAN.ANSend("$JTSVR2,");
+  // postAN.ANSend("$JTSVR3,");
+  // postAN.ANSend("$JTSVR4,");
+  // postAN.ANSend("$JTSVR5,");
+  // postAN.ANSend("$NETSTATE");
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style scoped>
+</style>

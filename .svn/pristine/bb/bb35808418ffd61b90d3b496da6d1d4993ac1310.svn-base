@@ -1,0 +1,90 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+  <CellGroup
+    inset
+    style="margin: 10px"
+    class="cellGroup"
+    v-for="(item, index) in 5"
+    :key="index"
+  >
+    <Cell>
+      <template #title>
+        <label style="margin-right: 10px; font-size: 13px">序号: {{index + 1}} </label>
+        <p style="margin: 0px; padding-top: 15px; font-size: 13px">
+          名称:  2222eds
+        </p>
+        <p style="margin: 0px; padding-top: 12px; font-size: 13px">
+          状态: <span style="color: #5fb878"> 在线 </span>
+        </p>
+      </template>
+
+      <template #right-icon>
+        <div style="font-size: 13px">
+          
+          <p style="margin-top: 8px">
+            ID: <span style="color: #5fb878"> 5555 </span>
+          </p>
+          <p style="margin-top: 2px">
+            当前温度: <span style="color: #5fb878"> 80 </span>
+          </p>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell,Toast } from "vant"; // Checkbox
+import { defineComponent, ref,onMounted  } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+const navTitle = ref("温度传感器"); // 标题
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-Alarm",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  console.log(str);
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  postAN.ANSend(param[1]);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+</style>

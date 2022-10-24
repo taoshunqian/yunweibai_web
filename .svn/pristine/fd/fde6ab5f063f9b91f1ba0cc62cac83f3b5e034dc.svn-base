@@ -1,0 +1,152 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin-top: 10px" v-for="(item,index) in getResultCmds" :key="index">
+    <Collapse v-model="activeNames">
+      <CollapseItem :title="'平台 ' + (index + 1)" :name=" '' + (index + 1) ">
+        <Cell title="服务器IP / 域名" :value="item[1]"></Cell>
+        <Cell title="服务器端口" :value="item[2]"></Cell>
+        <Cell title="是否启用" :value="filterStartState(item[3])"></Cell>
+        <Cell title="注册" :value="filterLogonState(item[4])"></Cell>
+
+        <Cell title="协议类型" :value="columns2[item[5]]"></Cell>
+        <Cell title="平台类型" :value="columns3[item[6]]"></Cell>
+        <Cell title="各地标准" :value="columns4[item[7]]"></Cell>
+      </CollapseItem>
+    </Collapse>
+  </CellGroup>
+
+  <!-- <StickyBottom /> -->
+  
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+// import StickyBottom from "@/components/stickyBottom.vue";
+import { Collapse, CollapseItem, CellGroup,Cell,Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+
+// 标题
+const navTitle = ref("平台状态");
+const activeNames = ref(["1"]);
+const sendNum = ref(0);
+const resultAll = ref("");
+const columns2 = ref(["JT808-2013", "JT808-2019", "JT808-2011", "JT905"]);
+const columns3 = ref([
+  "808标准协议平台",
+  "通天星",
+  "三一",
+  "星冠",
+  "超越",
+  "云科",
+  "东莞亿程",
+  "中车",
+  "厦门瑞讯",
+]);
+const columns4 = ref(["江苏", "广东", "新川标", "陕西"]);
+// const cmds = ref(["$JTSVR2,","$JTSVR3,","$JTSVR4,","$JTSVR5,","$NETSTATE"])
+const getResultCmds = ref([]);
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+
+// const settingServe = (e,index) => {
+//   console.log(e);
+//   router.push({
+//     path: "/ServeInfo",
+//     query: {
+//       item: e,
+//       index
+//     },
+//   });
+// };
+
+function filterStartState(name) {
+  let ti = "";
+  
+  switch (name) {
+    case "1":
+      ti = "启用";
+      break;
+    case "0":
+      ti = "不启用";
+      break;
+    default:
+      ti = "未知";
+  }
+  return ti;
+}
+
+function filterLogonState(name) {
+  let ti = "";
+  switch (name) {
+    case "1":
+      ti = "自动";
+      break;
+    case "0":
+      ti = "手动";
+      break;
+    default:
+      ti = "未知";
+  }
+  return ti;
+}
+
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+
+const callJSResult = (str) => {
+  console.log(str);
+  var cmds = str.split(";")[0];
+  sendNum.value++;
+  if (sendNum.value == 6) {
+    var cmd = [];
+    console.log(resultAll.value);
+    var items = resultAll.value.split("!");
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i].split(",");
+      cmd.push(item);
+    }
+    getResultCmds.value = cmd;
+    return false;
+  }
+  resultAll.value += cmds + "!";
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success("下发成功");
+  } else {
+    Toast.fail("下发失败");
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  // alert(param);
+  if (param[7] != undefined) {
+    return false;
+  }
+  postAN.ANSend(param[1]);
+  postAN.ANSend("$JTSVR2,");
+  postAN.ANSend("$JTSVR3,");
+  postAN.ANSend("$JTSVR4,");
+  postAN.ANSend("$JTSVR5,");
+  postAN.ANSend("$NETSTATE");
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+
+</script>
+
+<style scoped>
+</style>

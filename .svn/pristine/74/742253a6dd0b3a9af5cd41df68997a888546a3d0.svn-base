@@ -1,0 +1,143 @@
+<template>
+  <Sticky position="bottom" :offset-bottom="0" class="stickyBottom">
+    <div class="stickyDiv" v-if="guide">
+      <Button
+        plain
+        type="primary"
+        size="small"
+        style="width: 30%"
+        class="stickyButtom"
+        @click="setup"
+        :disabled="disabled"
+        :loading="loading"
+        >上一步</Button
+      >
+      <Button
+        type="primary"
+        size="small"
+        style="width: 25%"
+        class="stickyButtom"
+        @click="submit"
+        :disabled="disabled"
+        :loading="loading"
+        >保存</Button
+      >
+      <Button
+        plain
+        type="primary"
+        size="small"
+        style="width: 30%"
+        class="stickyButtom"
+        @click="next"
+        :disabled="disabled"
+        :loading="loading"
+        >下一步</Button
+      >
+    </div>
+    <div class="stickyDiv" v-else>
+      <Button
+        plain
+        type="primary"
+        size="small"
+        style="width: 45%"
+        class="stickyButtom"
+        @click="search"
+        :disabled="disabled"
+        :loading="loading"
+        >查询</Button
+      >
+      <Button
+        type="primary"
+        size="small"
+        style="width: 45%"
+        class="stickyButtom"
+        @click="submit"
+        :disabled="disabled"
+        :loading="loading"
+        >保存</Button
+      >
+    </div>
+  </Sticky>
+</template>
+
+
+<script setup>
+import { Button, Sticky } from "vant";
+import { defineComponent, ref,defineProps,defineEmits,watchEffect } from "vue";
+
+const porps = defineProps(["guide"],true);
+
+watchEffect(porps, async () => {
+},{
+  flush: 'post'
+})
+
+const emits = defineEmits(
+  ["BottomSetup","BottomSubmit","BottomNext","BottomSearch"]
+);
+
+const guide = ref(porps.guide);
+
+const disabled = ref(false);
+const loading = ref(false);
+
+// 上一步
+const setup = () => {
+  emits("BottomSetup");
+  setDisabled();
+};
+
+// 保存
+const submit = () => {
+  emits("BottomSubmit");
+  setDisabled();
+};
+
+// 下一步
+const next = () => {
+  emits("BottomNext");
+  setDisabled();
+};
+
+
+// 查询
+const search = () => {
+  emits("BottomSearch");
+  setDisabled();
+}
+
+// 设置禁用
+const setDisabled = () => {
+  disabled.value = true;
+  loading.value = true;
+  setTimeout(() => {
+    disabled.value = false;
+    loading.value = false;
+  }, 1000);
+};
+
+defineComponent({
+  name: "component-stickyBottom",
+});
+</script>
+
+<style>
+.stickyBottom {
+  position: fixed;
+  width: 100%;
+  left: 0px;
+  bottom: 0px;
+  padding: 10px 10px 20px;
+  border-top: 1px solid #cdcdcd;
+  background: white;
+}
+.stickyDiv {
+  width: 95%;
+  display: flex;
+  justify-content: space-between;
+}
+.stickyButtom {
+  border-radius: 5px;
+  height: 40px;
+}
+</style>

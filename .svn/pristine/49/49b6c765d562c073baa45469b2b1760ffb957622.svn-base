@@ -1,0 +1,35 @@
+<template>
+   <router-view></router-view>
+</template>
+
+<script setup>
+import router from "@/router";
+import { defineComponent } from "vue";
+
+// 向导模式 [ 国内 国际 ] 
+// 普通模式 [ 国内 国际 ]
+// version :版本 : true == 国内 , guide 向导 true == 向导模式   
+// [多条指令  单条指令]
+try {
+    var route = window.location.hash.split("#")[1];
+    router.push(route)
+} catch(e) {
+    console.warn(e);
+}
+
+defineComponent({
+  name: "app",
+});
+</script>
+
+<style>
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f7f8fa;
+  min-height: 92vh;
+  padding-bottom: 8vh;
+  /* overflow: hidden; */
+}
+</style>

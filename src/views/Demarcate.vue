@@ -1,0 +1,62 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <Button
+        type="primary"
+        size="normal"
+        style="margin-right: 20px;margin-top: 20px;"
+        @click="calibrationFn(1)"
+        >{{ $t('demarcate.button[0]') }}</Button
+      >
+
+      <Button
+        type="primary"
+        size="normal"
+        style="margin-right: 20px;margin-top: 20px;"
+        @click="calibrationFn(2)"
+        >{{ $t('demarcate.button[1]') }}</Button
+      >
+
+      <Button type="primary" size="normal" @click="calibrationFn(3)" style="margin-right: 20px;margin-top: 20px;"
+        >{{ $t('demarcate.button[2]') }}</Button
+      >
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 50px" class="cellGroup">
+    <Button type="success" block @click="EndModel">{{ $t('demarcate.button[3]') }}</Button>
+  </CellGroup>
+
+  <StickyBottom :guide="guide" @BottomNext="BottomNext" />
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { CellGroup, Cell, Button } from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+import { postAN } from "@/utlis/AdApi";
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+// 标题
+const navTitle = ref(t("demarcate.navTitle"));
+const guide = ref(true);
+
+const calibrationFn = (num) => {
+  postAN.calibrationFn(num);
+};
+
+const EndModel = () => {
+  postAN.finishWeb();
+};
+
+defineComponent({
+  name: "yunweibao-Demarcate",
+});
+</script>
+
+

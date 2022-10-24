@@ -1,0 +1,32 @@
+import { createRouter, createMemoryHistory } from 'vue-router';
+
+
+const Home = () => import('@/views/Home.vue');
+const SettingsIP = () => import('@/views/SettingsIP.vue');
+const BSD = () => import('@/views/BSD.vue');
+
+const routes = [
+    {
+        path: '/',
+        component: Home,
+        name:"首页"
+    },
+    {
+        path: '/SettingsIP',
+        component: SettingsIP,
+        name: '设置IP',
+    },
+    {
+        path: '/BSD',
+        component: BSD,
+        name: 'BSD',
+    }
+    
+];
+
+const router = createRouter({
+    routes,
+    history: createMemoryHistory()
+});
+
+export default router;

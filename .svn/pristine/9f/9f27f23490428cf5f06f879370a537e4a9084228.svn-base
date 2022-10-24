@@ -1,0 +1,55 @@
+<template>
+  <Popup round v-model:show="showPicker" position="bottom" :closeOnClickOverlay="false" :overlay="true">
+    <TreeSelect
+      v-model:active-id="activeIds"
+      v-model:main-active-index="activeIndex"
+      :items="items"
+    />
+    <slot />
+    <p></p>
+    <div style="padding-bottom: 10px">
+      <Button
+        plain
+        type="primary"
+        style="width: 45%; margin-left: 3%"
+        @click="clear"
+        >{{ $t('popupCheckbox.button[0]') }}</Button
+      >
+      <Button type="primary" style="width: 45%; margin-left: 3%" @click="submit"
+        >{{ $t('popupCheckbox.button[1]') }}</Button
+      >
+    </div>
+  </Popup>
+</template>
+
+<script setup>
+import { Popup, Button, TreeSelect } from "vant";
+import { defineComponent, ref, defineProps, watch,defineEmits } from "vue";
+
+let props = defineProps(["showPicker", "item"],true);
+const emit = defineEmits(['clear','submit']);
+
+const showPicker = ref(props.showPicker);
+watch(props, async (newValue) => {
+  showPicker.value = newValue.showPicker;
+});
+
+const activeIds = ref([]);
+const activeIndex = ref(0);
+const items = props.item ?? [];
+
+const clear = () => {
+  emit('clear')
+};
+
+const submit = () => {
+  emit('submit',activeIds)
+};
+
+defineComponent({
+  name: "yunweibao-PopupCheckbox",
+});
+</script>
+
+<style>
+</style>

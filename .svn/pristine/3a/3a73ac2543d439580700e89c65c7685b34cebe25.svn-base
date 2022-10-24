@@ -1,0 +1,78 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">启用</label>
+        <Checkbox
+          v-model="checked"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Field label="服务器类型" input-align="right" value="LTE"  placeholder="LTE" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="电话号码" type="tel" placeholder="请输入电话号码" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="接入点"  placeholder="请输入接入点" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="用户名"  placeholder="请输入用户名" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="密码"  placeholder="请输入密码" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px">
+    <Field label="MTU"  placeholder="请输入MTU" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 20px;height: 40px;">
+    <Button type="primary" style="width:100%">出厂设置</Button>
+  </CellGroup>
+  <p style="font-size:12px;text-align: center;color:#cdcdcd;">电话号码</p>
+
+  <StickyBottom />
+  
+</template>
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  CellGroup,
+  Field,
+  Cell,
+  Checkbox,
+  Button 
+} from "vant"; // Checkbox
+import { defineComponent, ref } from "vue";
+
+// 标题
+const navTitle = ref("3G/4G");
+
+const checked = ref("1");
+
+
+defineComponent({
+  name: "yunweibao-SettingsIP",
+});
+</script>
+
+<style>
+* {
+    
+}
+</style>

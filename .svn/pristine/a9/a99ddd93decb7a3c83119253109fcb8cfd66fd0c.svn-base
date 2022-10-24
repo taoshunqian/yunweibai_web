@@ -1,0 +1,8 @@
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from '@/router/index';
+import { setupI18n } from './locales/setupI18n';
+import 'vant/lib/index.css';
+
+
+createApp(App).use(setupI18n).use(router).mount('#app')
