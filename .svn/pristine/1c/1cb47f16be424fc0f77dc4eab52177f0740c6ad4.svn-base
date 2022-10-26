@@ -5,7 +5,6 @@
     <NavBar
       :title="porps.navTitle"
       :left-text="$t('tab.leftText')"
-      right-text="  "
       left-arrow
       @click-left="onClickLeft"
       @click-right="onClickRight"
@@ -28,8 +27,6 @@ const lavelMuch = porps.lavelMuch || false;
 const index = sessionStorage.guideIndex;
 const model = sessionStorage.model;
 
-let number = 0;
-
 const style = ref("backgroud:#ffffff;");
 if (model == "Ios") {
   style.value = "backgroud:#ffffff;margin-top: 20px;";
@@ -39,15 +36,7 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
 function onClickLeft() {
-  var rou = [
-    "/CarInfo",
-    "/3G4G",
-    "/WifiSettings",
-    "/PlatformSettings",
-    "/CameraSettings",
-    "/ADAS",
-    "/DSM1",
-  ];
+  var rou = ["/CarInfo","/3G4G","/WifiSettings","/PlatformSettings","/CameraSettings","/ADAS","/DSM1"]
   var path = router.currentRoute.value.path;
   if (lavelMuch) {
     router.go(-1);
@@ -62,13 +51,15 @@ function onClickLeft() {
           cancelButtonText: t("tab.dialog[3]"),
         })
           .then(() => {
+            
             postAN.finishWeb();
           })
-          .catch(() => {});
+          .catch(() => {
+          });
       } else {
-        if (rou.indexOf(path)) {
-          sessionStorage.guideIndex = sessionStorage.guideIndex - 1;
-          router.go(-1);
+        if(rou.indexOf(path)) {
+          sessionStorage.guideIndex = sessionStorage.guideIndex - 1
+           router.go(-1); 
         } else {
           router.go(-1);
         }
@@ -88,12 +79,8 @@ const backUi = (type) => {
 };
 
 const onClickRight = () => {
-  if (number == 2) {
-    // eslint-disable-next-line no-undef
-    AN.showLogs("logs");
-    number = 0;
-  }
-  number++;
+  // eslint-disable-next-line no-undef
+  AN.showLogs("logs");
 };
 
 window.backUi = backUi;

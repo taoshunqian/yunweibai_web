@@ -20,7 +20,6 @@
           :disabled="StateDisabled"
           shape="square"
           icon-size="15px"
-          @change="checkBoxChange"
         ></Checkbox>
       </template>
     </Cell>
@@ -120,7 +119,6 @@ const showPicker = ref(false); // 弹出层是否显示
 const deviceCamera = ref("");
 const image = ref("");
 const mirrorCmd = ref(""); // 镜像设置指令
-var cameraItems = [];
 
 // 设置选中的分辨率
 const onConfirm = (e) => {
@@ -135,16 +133,6 @@ const showPickerFn = () => {
     return false;
   }
   showPicker.value = true;
-};
-
-// 是否启用
-const checkBoxChange = (e) => {
-  var bool = e;
-  if (bool) {
-    if (deviceCamera.value == "" || deviceCamera.value == undefined) {
-      deviceCamera.value = cameraItems[0]; // 获取到当前选择的分辨率
-    }
-  }
 };
 
 // 保存
@@ -198,25 +186,23 @@ const BottomSearch = () => {
 
 // 解析出支持设置的分辨率
 const splitStr = () => {
+  console.warn(item);
   var itemArr = item.split("#"); // 获取到是否启用
-  console.log(itemArr);
-
+  checked.value = itemArr[0]; // 启用
   var cameraArr = itemArr[1].split(":"); // 分辨率
-
-  console.warn("分辨率: " + cameraArr[0]);
-  if (cameraArr[0] == 0) {
-    checked.value = !!+cameraArr[0]; // 启用
+  if (cameraArr[0] != 0) {
+    deviceCamera.value = defineColumns[cameraArr[0] - 1]; // 获取到当前选择的分辨率
+    var cameraArr2 = cameraArr[1].split("*");
+    var cameraItems = [];
+    for (var j = 0; j < cameraArr2.length; j++) {
+      cameraItems.push(defineColumns[cameraArr2[j] - 1]);
+    }
+    columns.value = cameraItems; // 显示 支持设置的分辨率
+    deviceColorIndex.value = cameraItems.indexOf(deviceCamera.value); // 获取到分辨率的索引
+    StateDisabled.value = false;
+  } else {
+    StateDisabled.value = false;
   }
-
-  deviceCamera.value = defineColumns[cameraArr[0] - 1]; // 获取到当前选择的分辨率
-  var cameraArr2 = cameraArr[1].split("*");
-
-  for (var j = 0; j < cameraArr2.length; j++) {
-    cameraItems.push(defineColumns[cameraArr2[j] - 1]);
-  }
-  columns.value = cameraItems; // 显示 支持设置的分辨率
-  deviceColorIndex.value = cameraItems.indexOf(deviceCamera.value); // 获取到分辨率的索引
-  StateDisabled.value = false;
 };
 
 // 命名空间
@@ -227,15 +213,15 @@ defineComponent({
 // -------------------------------------------------------------------
 // 安卓回调函数
 const callJSResult = (str) => {
+  
   var cmds = str.split(";")[0];
 
-  // 获取摄像头分辨率
-  if (cmds.indexOf("CAMERAMODE") !== -1) {
+  // 获取摄像头分辨率 
+  if(cmds.indexOf("CAMERAMODE") !== -1) {
     var cmdArr2 = cmds.split(",").splice(2);
-    console.log(cmdArr2);
     let nowMirror2 = cmdArr2[index];
     item = nowMirror2;
-    return false;
+    return false
   }
 
   mirrorCmd.value = cmds;
@@ -253,7 +239,7 @@ const callJSResult_IMG = (state, data) => {
     return false;
   } else {
     image.value = data;
-    console.warn(data);
+    console.warn(data)
   }
 };
 // 安卓成功失败回调
