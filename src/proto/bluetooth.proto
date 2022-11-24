@@ -1,0 +1,396 @@
+syntax = "proto3";
+
+//2022-04-14 10:00:00
+
+package TLBluetooth;
+
+
+enum ProtoCmdId{
+   ProtoCmdBase                         = 0;
+   HeatBeat                             = 200;  //心跳,30秒或者一分钟发一次，服务器回复一样的消息
+   ParseDeviceFile                      = 10000; //解析设备端文件
+   CollectingRecorder                   = 10001; //采集记录仪信息请求
+   CollectingSpecifiedFile              = 10002; //采集指定数据记录文件请求
+   ParameterSetting                     = 10003; //参数设置命令帧请求
+   GPSLocationInfoTest                  = 10004; //定位性能测试请求
+   DataSummary                          = 10005; //数据摘要请求
+
+   ConnectCom                           = 11000;//连接串口
+   DisConnectCom                        = 11001;//断开连接
+   ScanCanConnectDevice                 = 11002;//扫描可以连接的设备
+
+}
+
+enum ProtoCmdIdResp{
+    ProtoCmdRespBase                       = 0;
+    ProtoCmdRespErrResponse                = 500;//主动推送错误消息
+    CollectingRecorderResp                 = 20001;//采集记录仪信息回复
+    CollectingSpecifiedFileResp            = 20002;//采集指定数据记录文件回复
+    ParameterSettingResp                   = 20003;//参数设置命令帧回复
+    GPSLocationInfoTestResp                = 20004; //定位性能测试回复
+    DataSummaryResp                        = 20005; //数据摘要测试回复
+
+    DeviceCloseResp                        = 20006; //设备端断开连接
+
+    ConnectComResp                         = 21000;//连接串口
+    DisConnectComResp                      = 21001;//断开连接
+    ScanCanConnectDeviceResp               = 21002;//扫描可以连接的设备回复
+
+}
+
+message GeneralResponse{
+  uint32     errType        = 1; //错误类型
+  uint32     requestCmdId   = 2; //请求ID
+  string     errTime        = 3; //错误时间
+  string     appType        = 4; //App类型
+  string     errDes         = 5; //错误描述
+  uint32     errCode        = 6;//错误码:200表示成功,其他值表示失败
+}
+
+message WebResponse{
+    uint32         code           = 1;//状态码
+    string         message        = 2;//状态描述信息
+    string         returnData     = 3;//返回数据
+}
+
+message DataResponse{
+  string      data            = 1;//返回数据
+}
+
+message HttpUserInfo{
+     string                userName             = 1;
+     string                userGuid             = 2;
+}
+
+
+//解析文件的内容
+message DeviceFileContentRequest{
+     HttpUserInfo    httpUserInfo   = 1;
+     string          fileUid        = 2; //上传文件之后返回的有个值
+}
+
+message OneKeyValueInfo{
+     string       key         = 1;
+     string       value       = 2;
+}
+
+
+message OneBlockContent{
+     uint32                   blockType            = 1;//数据块的类型
+     string                   blockDescribe        = 2;//数据块描述
+     repeated   OneKeyValueInfo  blockMsgDataArray = 3;//数据块数据
+}
+
+message DeviceFileContentResponse{
+     string                     fileDescribe           = 1; //文件描述
+     string                     deviceName             = 2; //设备名
+     string                     fileBlockDescribe      = 3; //文件数据块描述
+     repeated  OneBlockContent  blockContArray         = 4;
+     string                     fileName               = 5;// 文件名称
+}
+
+
+//采集记录仪信息请求
+message CollectingRecorderRequest{
+     HttpUserInfo              httpUserInfo   = 1;
+     string                    executiveStandardYear  = 2; //执行标准版本号:2021, 2022等年份值
+}
+
+message CollectingRecorderResponse{
+     string                    executiveStandardYear   = 1; //执行标准版本号:2021, 2022等年份值
+     string                    execChangeOrderNumber   = 2;//执行标准修改单号,无修改单号为0
+     string                    recorderTime            = 4;//记录仪时间2022-04-13 08:00:00
+     string                    manufactureCertifiCode  = 5; //生产厂认证代码
+     string                    certifiedProductModel   = 6; //认证产品型号
+     string                    createYMD                = 7;//创建时间2022-04-13
+     string                    productSerialNumber      = 8; //产品生产流水号
+     string                    manufactureAbbr          = 9;//制造商名称简称的首字母缩写
+     string                    productModeAbbr          =10;//产品型号或产品型号简称
+     string                    deviceNumber             =11;//机动车号码车牌号
+     string                    deviceNumberClassify     = 12;//机动车号牌分类
+     string                    VIN                      = 13;//VIN
+     string                    serialNumber             = 14;//机动车电子标识序列号BCD码
+     uint32                    pulseFactor              =15;//脉冲系数
+     string                    firstInstallTime         =16;//初次安装时间2022-04-13 08:00:00
+     string                    checkCode                = 17;//校验段
+}
+
+enum DeviceRecordFileType{
+      DeviceRecordFileType_Base          = 0;
+      DeviceRecordFileType_TransportCondition  =  0x21; //行驶状态记录文件
+      DeviceRecordFileType_AccidentSuspects     = 0x22; //事故疑点记录文件
+      DeviceRecordFileType_TimeoutDriving       = 0x23; //超时驾驶记录文件
+      DeviceRecordFileType_DrivingInformation    = 0x24; //驾驶人信息记录文件
+      DeviceRecordFileType_LogFile             =   0x25; //日志记录文件
+}
+
+message FileInfoRequest{
+      DeviceRecordFileType       fileType            =  1;//文件类型
+      string                     startTime           =  2; //开始时间2022-04-13 08:00:00
+      string                     endTime             =  3;//结束时间2022-04-13 08:00:00
+}
+
+//采集指定数据记录文件请求
+message  CollectingSpecifiedFileRequest{
+       HttpUserInfo             httpUserInfo   = 1;
+       repeated FileInfoRequest  fileInfoArray  = 2;//要采集的文件信息
+}
+
+message OneRespFileInfo{
+        DeviceRecordFileType       fileType            =  1;//文件类型
+        uint32                     fileSize            =  2;//文件
+        string                     fileContent         = 3;//文件内容,根据不同的文件类型显示不同的文件内容
+}
+
+message GPSInfo{
+      uint32  longitude = 1;//单位:0.000001°/bit(负数表示西 经 经 度,若 位置经度无效,则为7FFFFFFFH)
+      uint32  latitude  = 2; //单位:0.000001°/bit(负数表示南 纬 纬 度,若 位置纬度无效,则为7FFFFFFFH)
+      uint32  height    = 3;//单位:1m/bit(负数为低于海平面,若位置高 度无效,则为7FFFH)
+}
+
+message OnOffSignInfo{
+	uint32                     ignition     = 1;//点火开关
+	uint32                     brake        = 2;//制动
+	uint32                     leftSteering = 3;//左转向
+	uint32                     rightSteering = 4;//右转向
+	uint32                     distance      = 5;//远光
+	uint32                     passingLight  = 6;//近光
+	uint32                     rearFogLamp   = 7;//后雾灯
+	uint32                     backOffCar    = 8;//倒车
+	uint32                     carDoor       = 9;//车门
+	uint32                     driverSeatBelt = 10;//驾驶人座椅安全带
+	uint32                     notUsed5       = 11;//未使用
+	uint32                     notUsed4       = 12;//未使用
+	uint32                     notUsed3       = 13;//未使用
+	uint32                     notUsed2       = 14;//未使用
+	uint32                     notUsed1       = 15;//未使用
+	uint32                     notUsed0       = 16;//未使用
+}
+
+//行驶状态记录
+message DrivingConditionBlockInfo{
+      string                      createTime      = 1; //时间
+      GPSInfo                     gpsInfo         = 2; //Gps信息
+      uint32                      direction       = 3;//北方向线起,依顺时针方向到行驶方向线之 间的水平夹角。单位:2°/bit
+      uint32                      canSpeed        = 4;//单位为千米每小时(km/h)
+      OnOffSignInfo               onOffSignInfo   = 5;//开关量信号,按位拆分
+      uint32                      satelliteSpeed  = 6;//单位为千米每小时(km/h)
+      repeated    uint32          dataStateBit    = 7;//数据状态字
+      string                      calibrationCode = 8;//校验段
+}
+
+//事故疑点记录文件
+message AccidentSuspectBlockInfo{
+	string                         endTime             =1; //行驶结束时间
+	string                         motorVehicleDrivNo  =2;//机动车驾驶证号码 str格式
+	GPSInfo                        gpsInfo             =3;//行驶结束时间前的最近一次有效位置经度
+	repeated        uint32         canSpeedArray       =4;//行驶速度(基于车速传 感器或 CAN 信号)
+	// 每0.1s间隔采集1次,共200组20s的事故 疑点记录,按时间倒序排列
+    repeated        OnOffSignInfo  onOffSignArray      =5;//开关量信号每0.1s间隔采集1次,共200组20s的事故 疑点记录,按时间倒序排列
+	string                         calibrationCode     =6; //校验段
+}
+
+//超时驾驶记录文件
+message DrivingTimeoutBlockInfo{
+	string             motorVehicleDrivNo     =1;//机动车驾驶证号码 str格式
+	string             startTime              =2;//连续驾驶 开始时间
+	GPSInfo            startGps               =3;//连续驾驶GPS
+	string             endTime                =4;//连续驾驶结束时间
+	GPSInfo            endGps                 =5;//连续驾驶 结束时间 及位置
+	string             calibrationCode        =6;//校验段
+}
+
+//驾驶人信息记录文件
+message DrivingInformationBlockInfo{
+    string              currentTime           =1;//时间
+    string              name                  =2;//姓名
+    string              MotorVehicleDrivNo    =3;//机动车驾驶证号码
+    string              DriverPicture         =4;//司机图片 JPG,webP,bmp格式
+}
+
+//日志记录文件
+enum LogFileType{
+                  logFileTypeUnknown      = 0;
+	              powerOn                 = 0x11; //电源接通
+	              powerOff                = 0x12; //电源断开
+	              setUpVehiclePlate       = 0x21; //设置机动车号牌号码
+	              setUpVehiclePlateClassify = 0x22;//设置机动车号牌分类
+	              setVin                    = 0x23;//设置 VIN
+	              setSerialNumber           = 0x24;//设置标识序列号
+	              setPulseCoefficient       = 0x25;//设置脉冲系数
+	              firstInstallTime          = 0x26;//设置初次安装时间
+	              setUniqueNumber           = 0x27;//设置记录仪唯一性编号
+	              satelliteCorrection       = 0x28;//卫星定位校时
+	              selfCheckNormal           = 0x31;//安装自检正常
+	              selfCheckNotComplate      = 0x32;//安装自检未完成
+	              installSettingExceltion   = 0x33;//安装参数设置异常
+	              speedException            = 0x34;//速度信号接入异常
+	              satelliteSignalExceltion  = 0x35;//卫星定位信号接入异常
+	              onOffSignalException      = 0x36;//制动等开关量信号接入异常
+                  selfTestNormal            = 0x41;//开机自检正常
+	              selfTestException         = 0x42;//开机自检未通过
+	              memoryException           = 0x43;//存储器异常
+	              satelliteModuleException  = 0x44;//卫星定位模块异常
+	              communicateModuleException= 0x45;//通信模块异常
+	              signalInputError           =0x46;//信号输入异常
+	              speedStateNormal           =0x51;//速度状态正常
+	              speedStateException        =0x52;//速度状态异常
+                  usbDataExport              =0x61;//USB数据导出
+                  blueToothExport            =0x62;//蓝牙数据导出
+}
+
+//日志记录文件
+message LogFileBlockInfo{
+	string              createTime           =1;//创建时间
+	LogFileType         logType              =2;//日志类型
+	string              logDescribe          =3;//日志说明
+	string              calibrationCode      =4;//校验段
+}
+
+
+message  CollectingSpecifiedFileResponse{
+       repeated   OneRespFileInfo   fileInfoArray       = 1;//采集记录文件的列表
+}
+
+
+//参数设置命令帧请求
+message  ParameterSettingRequest{
+        HttpUserInfo             httpUserInfo   = 1;
+         string                    manufactureCertifiCode  = 2; //生产厂认证代码
+             string                    certifiedProductModel   = 3; //认证产品型号
+             string                    createYMD                = 4;//创建时间2022-04-13
+             string                    productSerialNumber      = 5; //产品生产流水号
+             string                    manufactureAbbr          = 6;//制造商名称简称的首字母缩写
+             string                    productModeAbbr          =7;//产品型号或产品型号简称
+             string                    deviceNumber             =8;//机动车号码车牌号
+             string                    deviceNumberClassify     = 9;//机动车号牌分类
+             string                    VIN                       = 10;//VIN
+             string                    serialNumber              = 11;//机动车电子标识序列号
+             uint32                    pulseFactor               =15;//脉冲系数
+             string                    firstInstallTime           =16;//初次安装时间2022-04-13 08:00:00
+             string                    dataSummary                =17; //数据摘要,最大16个字节
+}
+
+//回复通用应答,成功或者失败,失败的有哪些失败的项
+
+//定位性能测试请求
+message  GPSLocationInfoTestRequest{
+        HttpUserInfo             httpUserInfo      = 1;
+        uint32                   sendDataDuring    = 2;//定位数据持续发送时间(单位秒),最大65535
+        uint32                   operatorType      = 3;//1:表示开始测试,2表示终止发送
+}
+
+message GGAData{
+        string                    time                 =  1;//时间:格式为hhmmss.sss
+        uint32                    locationState        =  2;//定位状态,0:未定位,1定位
+        string                    latitude             =  3;//纬度ddmm.mmmm（度分）格式
+        string                    latitudeDimension    =  4;//纬度半球N（北半球）或S（南半球）
+        string                    longitude            =  5;//经度dddmm.mmmm（度分）格式
+        string                    longitudeDimension   =  6;//经度半球E（东经）或W（西经
+        string                    floorSpeed           =  7;//地面速率（000.0~999.9节，Knot)
+        string                    direction            =  8;//地面航向（000.0~359.9度，以真北为参考基准，前导位数不足则补0）
+        string                    magnetic             =  9;//Magnetic Variation，磁偏角（000.0~180.0度，前导位数不足则补0）
+        string                    declination          =  10;//磁偏角方向，E（东）或W（西)
+        string                    modeIndicator        =  11;//模式指示（仅NMEA0183 3.00版本输出，A=自主定位，D=差分，E=估算，N=数据无效）
+        string                    checkCode            =  12;//校验段
+}
+
+message RMCData{
+        string                    time                 =  1;//时间:2022-04-13 08:00:00
+        uint32                    locationState        =  2;//定位状态,0:未定位,1定位
+        string                    latitude             =  3;//纬度ddmm.mmmm（度分）格式
+        string                    latitudeDimension    =  4;//纬度半球N（北半球）或S（南半球）
+        string                    longitude            =  5;//经度dddmm.mmmm（度分）格式
+        string                    longitudeDimension   =  6;//经度半球E（东经）或W（西经
+        uint32                    satellitesNumber     =  7;//卫星数量从00到12（前导位数不足则补0）
+        string                    horizontalAccuracy   =  8;//水平精确度，0.5到99.9
+        string                    antennaHeight        =  9;//天线离海平面的高度，-9999.9到9999.9米
+        string                    height               =  10;//高度单位，M表示单位米
+        string                    rTCMNumber           =  11;//差分GPS数据期限（RTCM SC-104），最后设立RTCM传送的秒数量
+        string                    diffBaseStateNumber  =  12;//差分参考基站标号，从0000到1023（前导位数不足则补0)
+        string                    checkCode            =  13;//校验段
+}
+
+message  GPSLocationInfoTestResponse{
+        repeated        GGAData       GGADataArray     =  1; //GGA数据长度
+        repeated        RMCData       RMCDataArray     =  2; //RMC数据长度
+}
+
+//数据摘要请求
+message  DataSummaryRequest{
+        HttpUserInfo             httpUserInfo                = 1;
+        string                   communicationDevTime        = 2;//通讯机时间
+}
+
+message  DataSummaryResponse{
+       string                    recorderTime              = 1;//记录仪时间2022-04-13 08:00:00
+       string                    manufactureCertifiCode   = 2; //生产厂认证代码
+       string                    certifiedProductModel    = 3; //认证产品型号
+       string                    createYMD                = 4;//创建时间2022-04-13
+       string                    productSerialNumber      = 5; //产品生产流水号
+       string                    manufactureAbbr          = 6;//制造商名称简称的首字母缩写
+       string                    productModeAbbr          =7;//产品型号或产品型号简称
+       string                    deviceNumber             =8;//机动车号码车牌号
+       string                    deviceNumberClassify     = 9;//机动车号牌分类
+       string                    VIN                      = 10;//VIN
+       string                    serialNumber             = 11;//机动车电子标识序列号
+       uint32                    pulseFactor              =12;//脉冲系数
+       string                    firstInstallTime         =13;//初次安装时间2022-04-13 08:00:00
+       string                    dataSummary              =14; //数据摘要,最大16个字节
+}
+
+//连接串口
+message ConnectComRequest{
+       HttpUserInfo             httpUserInfo                = 1;
+       uint32                   comNumber                   = 2;//串口号
+       string                   computeUniqueSession        = 3;//电脑唯一标识
+       uint32                   comBaudRate                  = 4; //串口波特率
+}
+
+//返回通用应答
+
+//断开端口
+message DisComRequest{
+      HttpUserInfo             httpUserInfo                = 1;
+}
+
+//返回通用应答
+
+//获取可以连接的设备
+message  ScanCanConnectDeviceRequest{
+    HttpUserInfo             httpUserInfo                 = 1;
+}
+
+message SerialPortDeviceInfo{
+     string                   computeName                  = 1; //计算机名称
+     string                   userName                     = 2; //计算机用户名
+     string                   computeUniqueSession         = 3; //计算机唯一标识(连接串口时需发送到服务器)
+     
+}
+
+message  ScanCanConnectDeviceResponse{
+     repeated     SerialPortDeviceInfo   serialPortArray   = 1;//可以连接串口的电脑
+}
+
+message UserLogInRequest{
+     string            userName = 1;  //userName
+     string            userPassword = 2; //user password
+     string            lang = 3;  //lang type
+     string            appType = 4;  //login device Type
+ }
+
+ message UserLogInResponse{
+     string sessionId = 1; //Session
+     uint32 userType  = 2;  //UserType:0:main account 1:sub account
+ }
+
+ message  SendCustomMessageToDeviceRequest{
+     HttpUserInfo             httpUserInfo                 = 1;
+     string                   sendCont                     = 2;
+     uint32                   sendHex                      = 3;//0:utf8发送,1:gbk发送,2:hex发送
+}
+
+message SendCustomMessageToDeviceResponse{
+     string                   recvCont                      =  1;
+     uint32                   sendHex                       =  2;
+}

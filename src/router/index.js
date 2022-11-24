@@ -28,12 +28,19 @@ const RotaTestNsor = () => import('@/views/RotaTestNsor.vue'); // 正反转
 const OneeireTable = () => import('@/views/OneeireTable.vue'); // 温度
 const OilParam = () => import('@/views/OilParam.vue'); // 油感
 
+const MockView = () => import('@/views/mockTest/mock.vue'); // 油感
+
 
 const routes = [
     {
         path: '/',
         component: Home,
         name: "首页"
+    },
+    {
+        path: '/MockView',
+        component: MockView,
+        name: "测试"
     },
     {
         path: '/DSM1',

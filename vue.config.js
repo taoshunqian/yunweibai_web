@@ -30,5 +30,9 @@ function formartDate() {
 module.exports = defineConfig({
   transpileDependencies: true,
   outputDir: 'ywb' + formartDate(),
-  publicPath: './'
+  publicPath: './',
+  lintOnSave: false,
+  devServer: {
+    
+  }
 })

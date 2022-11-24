@@ -93,7 +93,7 @@ import StickyBottom from "@/components/stickyBottom.vue";
 import { CellGroup, Field, Button, Toast } from "vant"; // Checkbox
 import { defineComponent, ref, onMounted } from "vue";
 import { postAN } from "@/utlis/AdApi";
-import { getQueryString } from "@/utlis/QueryStr";
+import { getQueryString,arrIndexExchange } from "@/utlis/QueryStr";
 import { useRoute } from "vue-router";
 
 import { useI18n } from "vue-i18n";
@@ -110,6 +110,7 @@ const adasInfo = ref([]);
 const loading = ref(false);
 
 const calibrationFn2 = () => {
+  console.warn("2222222222222222222222222222222")
   adasInfo.value =
     sessionStorage.test != undefined ? sessionStorage.test.split(",") : [];
 };
@@ -146,7 +147,7 @@ defineComponent({
 const callJSResult = (str) => {
   var cmds = str.split(";")[0];
   var cmdArr = cmds.split(",").splice(1);
-  console.log(cmdArr.length);
+  console.log("返回的参数"+ cmdArr);
   if (cmdArr.length < 2) {
     console.log("参数不全 ----" + cmdArr.length);
     calibrationFn2();
@@ -157,9 +158,11 @@ const callJSResult = (str) => {
       cmdArr[i] = setNumber(cmdArr[i]);
     }
   }
-  if (cmdArr[2] != 0) {
-    cmdArr[2] = cmdArr[1] / 2 - cmdArr[2];
-  }
+  // console.log(cmdArr)
+  cmdArr[2] = cmdArr[2] == "" ? 0 : cmdArr[2];
+  
+  cmdArr[2] = cmdArr[1] / 2 - cmdArr[2];
+  // console.warn("操作完成" + cmdArr[3]); // 第四个参数
   adasInfo.value = cmdArr;
 };
 
@@ -167,7 +170,9 @@ const updateUi = (state,cmds) => {
   var cmdInfo = [...adasInfo.value];
   if(state == 1) {
     var cmdsArr = cmds.split("@");
-    
+    arrIndexExchange(cmdsArr, 3,4);
+    // console.log("再次回调" + cmdsArr);
+    // console.log(cmdInfo);
     var num = 0;
     for(var i=0;i<cmdInfo.length;i++) {
       if (arr.includes(i)) {
@@ -176,7 +181,8 @@ const updateUi = (state,cmds) => {
       }
     }
   }
-  console.warn(cmds);
+  console.warn(adasInfo.value.toString())
+  // console.warn(cmds);
 } 
 
 // 安卓成功失败回调

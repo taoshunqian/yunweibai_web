@@ -54,6 +54,12 @@ export function getWifiASCFormat(nameWifi) {
 function PrefixInteger(num, m) {
   return (Array(m).join(0) + num).slice(-m);
 }
+
+// 互换 位置
+export function arrIndexExchange(array, x, y) {
+  array.splice(x - 1, 1, ...array.splice(y - 1, 1, array[x - 1]))
+  return array
+}
 // export default {
 //     getQueryString
 // }
