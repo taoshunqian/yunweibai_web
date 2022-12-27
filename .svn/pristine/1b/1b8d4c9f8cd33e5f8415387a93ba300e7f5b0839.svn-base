@@ -1,0 +1,38 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <AlarmConfig />
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+
+/*
+报警器 和 刷卡器 共用
+*/ 
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import AlarmConfig from "@/components/AlarmConfig.vue";
+import { defineComponent, ref, onMounted } from "vue";
+const navTitle = ref("报警器");
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-BurglarAlarm",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped>
+.cell-group {
+  margin: 10px
+}
+</style>

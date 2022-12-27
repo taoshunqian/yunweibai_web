@@ -1,0 +1,234 @@
+<template>
+  <div class="stickyBottom">
+    <!-- 向导模式 -->
+    <div class="stickyDiv" v-if="guide">
+      <Button
+        plain
+        type="primary"
+        size="small"
+        :style="'width:' + guideSetupButton + '%'"
+        class="stickyButtom"
+        @click="setup"
+        :disabled="disabled"
+        :loading="loading"
+        >{{ $t("stickyBottom.button[0]") }}</Button
+      >
+      <Button
+        :type="guideSubmitColor"
+        size="small"
+        :style="'width:' + guideButton + '%'"
+        class="stickyButtom"
+        @click="submit"
+        :disabled="disabled"
+        :loading="loading"
+        >{{ guideSubmitTitle }}</Button
+      >
+      <Button
+        plain
+        type="primary"
+        size="small"
+        style="width: 30%"
+        class="stickyButtom"
+        @click="next"
+        :disabled="disabled"
+        :loading="loading"
+        v-show="last"
+        >{{ $t("stickyBottom.button[2]") }}</Button
+      >
+    </div>
+    <!-- 普通模式 -->
+    <div class="stickyDiv" v-else>
+      <Button
+        plain
+        type="primary"
+        size="small"
+        style="width: 45%"
+        class="stickyButtom"
+        @click="search"
+        :disabled="disabled"
+        :loading="loading"
+        >{{ $t("stickyBottom.button[3]") }}</Button
+      >
+      <Button
+        type="primary"
+        size="small"
+        style="width: 45%"
+        class="stickyButtom"
+        @click="submit"
+        :disabled="disabled"
+        :loading="loading"
+        >{{ $t("stickyBottom.button[4]") }}</Button
+      >
+    </div>
+  </div>
+  <!-- <Sticky :position="position" :offset-bottom="offsetBottom"  class="stickyBottom"> -->
+
+  <!-- </Sticky> -->
+</template>
+
+
+<script setup>
+import { Button, Toast } from "vant"; // Sticky
+import router from "@/router";
+import {
+  defineComponent,
+  ref,
+  defineProps,
+  defineEmits,
+  watchEffect,
+} from "vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const porps = defineProps(["guide"]);
+const guideButton = ref("25"); // 保存按钮宽度
+const guideSubmitTitle = ref(t("stickyBottom.button[1]"));
+const guideSubmitColor = ref("primary");
+const guideSetupButton = ref("30"); // 上一步按钮宽度
+const last = ref(false);
+
+const index = sessionStorage.guideIndex;
+const model = sessionStorage.model;
+
+const position = ref("");
+const offsetBottom = ref("");
+if (model != "Ios") {
+  position.value = "bottom";
+  offsetBottom.value = "0";
+}
+
+position.value = "bottom";
+offsetBottom.value = "0";
+
+if (index == 6) {
+  guideButton.value = "45";
+  guideSetupButton.value = "45";
+  guideSubmitTitle.value = t("stickyBottom.button[5]");
+  guideSubmitColor.value = "success";
+} else {
+  last.value = true;
+}
+
+let GUIDEARRAY = [
+  "CarInfo@$BUS@0@2@车辆信息@8@treeDemo_17@10001",
+  "3G4G@$DIAL@0@25@拨号@8@treeDemo_46@10001",
+  "WifiSettings@$WIFILIST@0@401@WIFI设置@8@treeDemo_50@10001",
+  "PlatformSettings@$JTSVR@0@40@平台配置@8@treeDemo_6@10001",
+  "CameraSettings@$CAMERAMODE@0@5@摄像头设置@8@treeDemo_54@10001",
+
+  "ADAS@$ADASCALIBRATION@0@5@ADAS@8@treeDemo_54@10001",
+  "DSM1@$DSMCALIBRATION,DSM1@0@5@BSM1@8@treeDemo_54@10001",
+  // "DSM2@$DSMCALIBRATION,DSM2@0@5@BSM2@8@treeDemo_54@10001",
+]; // 指令集
+
+sessionStorage.guide = JSON.stringify(GUIDEARRAY); // 存储到内存中
+
+console.log(porps.guide);
+
+watchEffect(porps, async () => {}, {
+  flush: "post",
+});
+
+const emits = defineEmits([
+  "BottomSetup",
+  "BottomSubmit",
+  "BottomNext",
+  "BottomSearch",
+]);
+
+const guide = ref(porps.guide);
+
+const disabled = ref(false);
+const loading = ref(false);
+
+// 上一步
+const setup = () => {
+  if (sessionStorage.guideIndex == 0) {
+    Toast(t("stickyBottom.toast"));
+    return false;
+  }
+  var goIndex = +sessionStorage.guideIndex - 1;
+  var goRouter = GUIDEARRAY[goIndex].split("@")[0];
+  loadingRouter(goRouter);
+  sessionStorage.guideIndex = goIndex;
+  emits("BottomSetup");
+  setDisabled();
+};
+
+// 保存
+const submit = () => {
+  emits("BottomSubmit");
+  setDisabled();
+};
+
+// 等待一会再加载/跳转，不然设备反应不过来
+const loadingRouter = (rou) => {
+  setTimeout(() => {
+    router.push({
+      path: "/" + rou,
+      query: {
+        guide: true,
+      },
+    });
+  }, 1000);
+};
+
+// 下一步
+const next = () => {
+  if (sessionStorage.guideIndex == 6) {
+    Toast(t("stickyBottom.toast"));
+    return false;
+  }
+  var goIndex = +sessionStorage.guideIndex + 1;
+  var goRouter = GUIDEARRAY[goIndex].split("@")[0];
+  loadingRouter(goRouter);
+
+  sessionStorage.guideIndex = goIndex;
+  emits("BottomNext");
+  setDisabled();
+};
+
+// 查询
+const search = () => {
+  emits("BottomSearch");
+  setDisabled();
+};
+
+// 设置禁用
+const setDisabled = () => {
+  disabled.value = true;
+  loading.value = true;
+  setTimeout(() => {
+    disabled.value = false;
+    loading.value = false;
+  }, 1000);
+};
+
+defineComponent({
+  name: "component-stickyBottom",
+});
+</script>
+
+<style>
+.stickyBottom {
+  position: fixed;
+  width: 100%;
+  bottom: 0px;
+  padding-bottom: 15px;
+  padding-top: 8px;
+  border-top: 1px solid #cdcdcd;
+  
+
+  background: white;
+}
+.stickyDiv {
+  width: 98%;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: nowrap;
+}
+.stickyButtom {
+  border-radius: 5px;
+  height: 40px;
+}
+</style>

@@ -1,0 +1,160 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <AlarmConfig
+    model="2"
+    :status="status"
+    :data="comInfo"
+    :columnShowItem="columnShowItem"
+    @comConfirm="comConfirm"
+  />
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import AlarmConfig from "@/components/AlarmConfig.vue";
+import { Toast } from "vant";
+import { defineComponent, ref, onMounted, onBeforeUnmount } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { useI18n } from "vue-i18n";
+import { columnComInfo } from "@/utlis/QueryStr";
+const { t } = useI18n();
+import { useRoute } from "vue-router";
+let route = useRoute();
+const index = route.query.index;
+
+const columnIndex = columnComInfo();
+
+const columnShowItem = ref([]);
+const comInfo = ref([]);
+const navTitle = ref("串口序号 " + index);
+const allCmdList = ref([]); // 解析的完整指令
+const status = ref(true); // 状态更新
+const isSend = ref(false); // 是否允许设置参数
+
+const filterABtn = (num) => {
+  var str = "";
+  switch (num) {
+    case "78":
+      str = "无校验";
+      break;
+    case "79":
+      str = "奇校验";
+      break;
+    case "69":
+      str = "偶校验";
+      break;
+  }
+  return str;
+};
+
+const BottomSearch = () => {
+  androidStatus_fn();
+  isSend.value = false;
+};
+
+const BottomSubmit = () => {
+  status.value = !status.value;
+  isSend.value = true;
+};
+
+const comConfirm = (value) => {
+  // var arrItem = value;
+  var ix = index - 1;
+  if (isSend.value) {
+    allCmdList.value[ix] = (ix + 1)+ ","+ value.toString();
+    var cmdList = [...allCmdList.value];
+    cmdList.forEach(item => {
+      var send = "$UARTSET," + item;
+      postAN.ANsendSetting(send);
+      // console.log(send);
+    })
+    
+  }
+  // var items = [];
+  // for(var i=0;i<arrItem.length;i++) {
+  //   items.push(arrItem[i].value);
+  // }
+  // console.log(items);
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-ComInfo",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  var allArr = [];
+  var itemShowIndexArr = [];
+  var showArr = [];
+  var basciALlArr = [];
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("~");
+    var item2 = cmdArr[i].split("~");
+    var itIndex = [...item[1].split("*")];
+    item2[1] = itIndex[0];
+    var activeIndex = itIndex[0];
+    itemShowIndexArr.push(itIndex.slice(1));
+    item[1] = columnIndex[activeIndex];
+    basciALlArr.push(item2);
+    allArr.push(item);
+  }
+  columnShowItem.value = showArr;
+  var itemIndex = itemShowIndexArr[index - 1];
+  itemIndex.forEach((item) => {
+    showArr.push(columnIndex[item]);
+  });
+
+  allCmdList.value = basciALlArr;
+  var data = allArr[index - 1];
+  data.shift();
+  data[4] = filterABtn(data[4]);
+  comInfo.value = data;
+  
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  console.warn(str);
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$UARTSET");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+
+onBeforeUnmount(() => {
+  console.log("离开当前路由-------------");
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin-top: 10px;
+}
+</style>

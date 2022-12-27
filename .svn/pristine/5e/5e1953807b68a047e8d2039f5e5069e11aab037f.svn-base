@@ -1,0 +1,58 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <AlarmConfig model="2" />
+
+  <CellGroup inset class="cell-group">
+    <Cell title="选择通道" is-link value="内容" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="协议类型" is-link value="内容" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field label="解码器地址" label-width="120"
+            placeholder="请输入解码器地址"
+            input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="流控" is-link value="内容" />
+  </CellGroup>
+
+  
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import AlarmConfig from "@/components/AlarmConfig.vue";
+import { CellGroup, Cell, Field } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+const navTitle = ref("云台");
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-PTZSettings",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped>
+.cell-group {
+  margin-top: 10px;
+}
+</style>

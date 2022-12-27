@@ -1,0 +1,184 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <Row>
+    <Col offset="1" span="22">
+      <CellGroup
+        class="output-item"
+        v-for="(item, index) in alarmList"
+        :key="index"
+      >
+        <Cell>
+          <template #title>
+            <span class="custom-title">输出: {{ item[0] }}</span>
+          </template>
+          <template #right-icon>
+            <span>PIN NO: {{ item[1] }}</span>
+          </template>
+        </Cell>
+        <RadioGroup
+          direction="horizontal"
+          class="radio-group"
+          style="width: 100%;"
+          v-model="item[2]"
+          :change="selectRadio(item)"
+        >
+          <Cell>
+            <template #title>
+              <div class="radio-group-main">
+                <span style="float: left;">远程 </span>
+                <span style="float: left; margin-left: 10px;">
+                  <Radio name="1" shape="square" />
+                </span>
+              </div>
+              <div class="radio-group-main">
+                <span style="float: left;">手动 </span>
+                <span style="float: left; margin-left: 10px;">
+                  <Radio name="2" shape="square" />
+                </span>
+              </div>
+            </template>
+            <template #right-icon>
+              <div style="float:right;">
+                <div class="radio-group-main">
+                  <span style="float: left;">联动 </span>
+                  <span style="float: left; margin-left: 10px;">
+                    <Radio name="0" shape="square" />
+                  </span>
+                </div>
+                <div class="radio-group-main">
+                  <span>测试 </span>
+                  <span><Switch v-model="item[3]" :disabled="item[4]" size="22px" /> </span>
+                </div>
+              </div>
+            </template>
+          </Cell>
+        </RadioGroup>
+      </CellGroup>
+    </Col>
+  </Row>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  Cell,
+  CellGroup,
+  Col,
+  Row,
+  Radio,
+  Toast,
+  RadioGroup,
+  Switch,
+} from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const navTitle = ref("报警输出");
+const alarmList = ref([]);
+
+const selectRadio =(item) => {
+  if(item[2] == 2) {
+    item[3] = true;
+    item[4] = false;
+  } else {
+    item[3] = false;
+    item[4] = true;
+  }
+}
+
+const BottomSubmit = () => {
+  var cmdArr = [...alarmList.value];
+  var cmds = [];
+  for(var i=0;i<cmdArr.length;i++) {
+    var item = cmdArr[i].slice(0,4);
+    item[3] = +item[3];
+    if(item[2] == 2) {
+      cmds.push(item.join("*"));
+    } else {
+      cmds.push(item.slice(0,3).join("*"));
+    }
+  }
+  var cmd = "$ALARMOUT," + cmds.toString();
+  console.warn("发送数据"+ cmd);
+  postAN.ANsendSetting(cmd);
+}
+
+const BottomSearch =() => {
+  androidStatus_fn();
+}
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-AlarmOutput",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  console.log(str)
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  var cmdList = [];
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("*");
+    if(item.length == 3) {
+      item.push(false)
+      item.push(true)
+    } else {
+      item[3] = true;
+      item.push(false)
+    }
+    cmdList.push(item);
+  }
+  alarmList.value = cmdList;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$ALARMOUT");
+};
+androidStatus_fn();
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+.output-item,
+.radio-group-main {
+  margin: 20px 0px;
+  width: 100%;
+  
+}
+.custom-title {
+  font-weight: 550;
+}
+.radio-group-main {
+  display: block;
+  height: 20px;
+}
+.radio-group {
+  display: inline-block;
+  padding-left: 8px;
+}
+</style>

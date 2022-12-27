@@ -1,0 +1,249 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <CellGroup inset class="cell-group">
+    <Cell title="启用">
+      <template #right-icon>
+        <Checkbox v-model="OneWireTable[0]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field
+      label="ID"
+      placeholder="ID "
+      v-model="OneWireTable[1]"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field
+      label="名称"
+      placeholder="请输入名称"
+      v-model="OneWireTable[2]"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="温度上限报警功能">
+      <template #right-icon>
+        <Checkbox v-model="OneWireTable[3]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field
+      label="温度上限"
+      v-model="OneWireTable[4]"
+      placeholder="请输入上限值"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="温度下限报警功能">
+      <template #right-icon>
+        <Checkbox v-model="OneWireTable[5]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field
+      label="温度下限"
+      v-model="OneWireTable[6]"
+      placeholder="请输入下限值"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="蜂鸣器">
+      <template #right-icon>
+        <Checkbox shape="square" v-model="OneWireTable[7]"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <!-- <CellGroup inset class="cell-group">
+    <Field
+      label="报警输出IO个数"
+      label-width="150"
+      v-model="OneWireTable[8]"
+      placeholder="请输入IO个数"
+      input-align="right"
+    />
+  </CellGroup> -->
+
+  <CellGroup inset class="cell-group">
+    <Field
+      label="上报频率"
+      label-width="150"
+      placeholder="请输入IO个数"
+      v-model="OneWireTable[10]"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="选择IO">
+      <template #right-icon>
+        <div style="width: 150px">
+          <CheckboxGroup v-model="checked" direction="horizontal">
+            <Checkbox
+              :name="item"
+              shape="square"
+              v-for="(item, index) in ioNumber"
+              :key="index"
+              style="margin-bottom: 8px"
+              >{{ item }}</Checkbox
+            >
+          </CheckboxGroup>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup, Field, Checkbox, Toast, CheckboxGroup } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { baseChange } from "@/utlis/QueryStr";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+import { useRoute } from "vue-router";
+let route = useRoute();
+const query = route.query;
+
+const number = query.number ?? 0;
+
+const navTitle = ref("温度传感器 " + number);
+const OneWireTable = ref([]);
+const checked = ref([]);
+const ioNumber = ref(1);
+var filterIndexs = [0, 3, 5, 7];
+
+// 查询按钮
+const BottomSearch = () => {
+  androidStatus_fn();
+};
+
+const BottomSubmit = () => {
+  var cmdArr = [...OneWireTable.value];
+  var basicCmd = [];
+  cmdArr.forEach((item, index) => {
+    if (index != 8) {
+      if (filterIndexs.includes(index)) {
+        basicCmd.push(+item);
+      } else {
+        basicCmd.push(item);
+      }
+    }
+  });
+  // console.log(checked.value);
+  var btn = [...checked.value];
+  var btnStr = "";
+  for (var i = 1; i <= ioNumber.value; i++) {
+    if (btn.includes(i)) {
+      btnStr += "1";
+    } else {
+      btnStr += "0";
+    }
+  }
+  var cmdRes = btnStr;
+  basicCmd[8] = cmdRes;
+  var cmd = "$ONEWIRETEMPERASET," + number + ","+basicCmd.toString();
+  console.log(cmd);
+  postAN.ANsendSetting( cmd);
+};
+
+const filterBasicBool = (val) => {
+  var bool = !!+val;
+  return bool;
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-TemperatureSensingStateDetails",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  // eslint-disable-next-line no-redeclare
+  var cmds = [];
+
+  cmdArr.forEach((item, index) => {
+    if (filterIndexs.includes(index)) {
+      var it = filterBasicBool(item);
+      cmds.push(it);
+    } else {
+      if (index == 8) {
+        var is = item.split("*");
+        cmds.push(...is);
+      } else {
+        cmds.push(item);
+      }
+    }
+  });
+  ioNumber.value = +cmds[8];
+  var IOBtn = baseChange(cmds[9], ioNumber.value);
+  var selectBtn = [];
+  for (var i = 0; i < IOBtn.length; i++) {
+    if (IOBtn[i] != 0) {
+      selectBtn.push(i + 1);
+    }
+  }
+  checked.value = selectBtn;
+  OneWireTable.value = cmds;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$ONEWIRETEMPERAGET," + number);
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin-top: 10px;
+}
+</style>

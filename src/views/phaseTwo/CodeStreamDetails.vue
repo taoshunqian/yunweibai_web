@@ -1,0 +1,308 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <!-- <CellGroup inset class="cell-group">
+    <Cell title="启用">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup> -->
+
+  <CellGroup inset class="cell-group">
+    <Cell title="音频叠加">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell
+      title="分辨率"
+      is-link
+      :value="columnPower[renderData[3]]"
+      @click="showPickerFn(1)"
+    >
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="帧率" is-link :value="renderData[4]" @click="showPickerFn(5)">
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell
+      title="位率类型"
+      is-link
+      :value="colimnBitrate[renderData[5]]"
+      @click="showPickerFn(2)"
+    >
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="位率" is-link :value="renderData[6]" @click="showPickerFn(6)">
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell
+      title="画质"
+      is-link
+      :value="columnImage[renderData[7]]"
+      @click="showPickerFn(3)"
+    >
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell
+      title="编码标准"
+      is-link
+      :value="columnVideo[renderData[8]]"
+      @click="showPickerFn(4)"
+    >
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="存储大小">
+      <template #right-icon>
+        <span style="color: green">{{ sessionColumns }} GB/h</span>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <AlarmPicker
+      :columns="columns"
+      :showPicker="showPicker"
+      :defaultIndex="defaultIndex"
+      @confirm="onConfirm"
+      @cancel="showPicker = false"
+    />
+  </Popup>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup, Checkbox, Toast, Popup } from "vant"; // Checkbox
+import AlarmPicker from "@/components/Alarm//AlarmPicker.vue";
+import { postAN } from "@/utlis/AdApi";
+import {
+ columnPower,columnImage,columnVideo,colimnBitrate
+} from "@/utlis/ConfigConst";
+import { defineComponent, ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+let route = useRoute();
+const channel = route.query.channel;
+const type = route.query.type;
+
+const colomnBitrateList = ref([]); // 位率
+const columnFramerate = ref([]); // 帧率
+
+const navTitle = ref("主/子码流 1");
+const showPicker = ref(false);
+const renderData = ref([]); // 需要展示的数据
+const columns = ref([]);
+
+const sessionColumns = ref("");
+const defaultIndex = ref(0);
+const setValueIndex = ref(0);
+const checked = ref(true);
+// eslint-disable-next-line no-unused-vars
+let newColomn = [];
+let cmdHeader = "";
+let allCmd = []; // 获取到所有数据
+let limitCmd = []; // 限制
+
+// 弹出 picker 选择器
+const showPickerFn = (num) => {
+  switch (num) {
+    case 1: // 分辨率
+      newColomn = columnPower;
+      columns.value = showPickerItems(columnPower, limitCmd[0]);
+      defaultIndex.value = renderData.value[3];
+      setValueIndex.value = 3;
+      break;
+    case 2: // 位率类型
+      newColomn = colimnBitrate;
+      columns.value = colimnBitrate;
+      defaultIndex.value = renderData.value[5];
+      setValueIndex.value = 5;
+      break;
+    case 3: // 画质
+      newColomn = columnImage;
+      columns.value = showPickerItems(columnImage, limitCmd[4]);
+      defaultIndex.value = renderData.value[7];
+      setValueIndex.value = 7;
+      break;
+    case 4: // 编码标准
+      newColomn = columnVideo;
+      columns.value = showPickerItems(columnVideo, limitCmd[5]);
+      defaultIndex.value = renderData.value[8];
+      setValueIndex.value = 8;
+      break;
+    case 5: // 帧率
+      columns.value = columnFramerate.value;
+      defaultIndex.value = columnFramerate.value.indexOf(renderData.value[4]);
+      setValueIndex.value = 4;
+      break;
+    case 6: // 位率
+      columns.value = colomnBitrateList.value;
+      defaultIndex.value = colomnBitrateList.value.indexOf(renderData.value[6]);
+      setValueIndex.value = 6;
+      break;
+  }
+  showPicker.value = true;
+};
+
+// picker 选中值
+const onConfirm = (value) => {
+  console.log(value);
+  if (setValueIndex.value == 4 || setValueIndex.value == 6) {
+    renderData.value[setValueIndex.value] = value[0];
+  } else {
+    renderData.value[setValueIndex.value] = newColomn.indexOf(value[0]);
+  }
+  showPicker.value = false;
+};
+
+// 显示在picker 的值域
+const showPickerItems = (column, column2) => {
+  console.log(column2);
+  var showItems = [];
+  for (var i = 0; i < column.length; i++) {
+    if (column2.includes(i.toString())) {
+      showItems.push(column[i]);
+    }
+  }
+  return showItems;
+};
+
+// 解析指令
+const encodeData = (cmdArr) => {
+  var allItem = [];
+  var limitStr = "";
+  var limitList = [];
+  cmdArr.forEach((item, index) => {
+    var it8 = item[8].split(":");
+    var it = item.slice(0, 8);
+  
+    if (index == channel - 1) {
+      limitStr = it8[1];
+    }
+    it.push(it8[0]);
+    allItem.push(it);
+  });
+   
+  allCmd = allItem;
+  var arr = limitStr.split("@@");
+  for (var i = 0; i < arr.length; i++) {
+    var im = arr[i].split("*");
+    limitList.push(im);
+  }
+  columnFramerate.value = limitList[1];
+  colomnBitrateList.value = limitList[3];
+  // console.log(columnFramerate.value);
+  limitCmd = limitList;
+  return allItem;
+};
+
+// 查询按钮
+const BottomSearch = () => {
+  androidStatus_fn();
+};
+
+const BottomSubmit = () => {
+  let renderCmd = [...renderData.value];
+  renderCmd[2] = +checked.value;
+  allCmd[channel - 1] = renderCmd;
+  let cmds = [];
+  allCmd.forEach((item) => {
+    cmds.push(item.join("~"));
+  });
+  var data = cmdHeader + "," + cmds.toString();
+  console.log("------------------");
+  console.log(data);
+  postAN.ANsendSetting(data);
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  renderData.value = [];
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  var cmdItems = [];
+  cmdArr.forEach((item) => {
+    var it = item.split("#");
+    cmdItems.push(it);
+  });
+  // console.log(encodeData(cmdItems));
+  
+  renderData.value = encodeData(cmdItems)[channel - 1];
+  var size = (renderData.value[6] * 3600) / 1024 / 1024 / 8;
+  sessionColumns.value = size.toFixed(2);
+  checked.value = !!+renderData.value[2];
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  try {
+    if (type == 1) {
+      navTitle.value = "主码流 通道" + channel;
+      postAN.ANSend("$MAINRECORDV3");
+      cmdHeader = "$MAINRECORDV3";
+    } else {
+      navTitle.value = "子码流 通道" + channel;
+      postAN.ANSend("$SUBRECORDV3");
+      cmdHeader = "$SUBRECORDV3";
+    }
+    return;
+  } catch (e) {
+    console.log(e);
+  }
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

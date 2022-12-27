@@ -1,0 +1,307 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+  <ComConfig
+    :loadCmdInfo="loadCmdInfo"
+    :status="status"
+    :cmdCmdInfo="cmdCmdInfo"
+    @comConfirm="comConfirm"
+  />
+
+  <CellGroup inset class="cell-group">
+    <Field
+      type="tel"
+      label="当前电压值"
+      label-width="120"
+      placeholder="请输入"
+      input-align="right"
+      disabled
+      v-model="loadCmdInfo[2]"
+    >
+      <template #button>
+        <span>MV</span>
+      </template></Field
+    >
+    <Field
+      type="tel"
+      label="当前重量"
+      label-width="120"
+      placeholder="请输入"
+      input-align="right"
+      disabled
+      v-model="loadCmdInfo[3]"
+    >
+      <template #button>
+        <span>KG</span>
+      </template>
+    </Field>
+  </CellGroup>
+
+  <!-- 标定数目 -->
+  <div style="margin-top: 20px; background: #ffffff">
+    <Row>
+      <Col span="16">
+        <CellGroup>
+          <Field
+            type="tel"
+            label="标定数目"
+            label-width="120"
+            placeholder="请输入标定数目"
+            input-align="right"
+            v-model="loadCmdInfo[4]"
+            disabled
+          />
+        </CellGroup>
+      </Col>
+      <Col span="8">
+        <Button
+          type="danger"
+          size="small"
+          style="margin-right: 10px; margin-top: 6px; float: right"
+          @click="deleteCalibrationInfoFn"
+          >删除</Button
+        >
+        <Button
+          type="primary"
+          size="small"
+          style="float: right; margin-top: 6px; margin-right: 10px"
+          @click="addCalibrationInfoFn"
+          >添加</Button
+        >
+      </Col>
+    </Row>
+  </div>
+
+  <Row>
+    <Col offset="1" span="22">
+      <CellGroup
+        style="margin-top: 10px"
+        v-for="(item, index) in addCalibrationInfo"
+        :key="index"
+      >
+        <Cell>
+          <template #title>
+            <Checkbox shape="square" v-model="item.check"
+              >序号 {{ index + 1 }}</Checkbox
+            >
+          </template>
+        </Cell>
+        <Field
+          type="tel"
+          label="当前重量"
+          label-width="120"
+          placeholder="请输入"
+          input-align="right"
+          v-model="item.value1"
+        >
+          <template #button>
+            <span>KG</span>
+          </template>
+        </Field>
+        <Field
+          type="tel"
+          label="标定重量"
+          label-width="120"
+          placeholder="请输入"
+          input-align="right"
+          v-model="item.value2"
+        >
+          <template #button>
+            <span>KG</span>
+          </template>
+        </Field>
+      </CellGroup>
+    </Col>
+  </Row>
+  <footer style="padding-bottom: 50px"></footer>
+  <StickyBottom @BottomSubmit="BottomSubmit" />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import ComConfig from "@/components/ComConfig.vue";
+import { postAN } from "@/utlis/AdApi";
+import {
+  Col,
+  Row,
+  Cell,
+  Field,
+  CellGroup,
+  Button,
+  Checkbox,
+  Toast,
+} from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const navTitle = ref("载重");
+const resultAll = ref("");
+const maxNum = ref(0);
+const comAllCmdInfo = ref([]);
+const cmdCmdInfo = ref([]);
+const loadCmdInfo = ref([]);
+const addCalibrationInfo = ref([]);
+const status = ref(true); // 状态更新
+const isSend = ref(false); // 是否允许设置参数
+// 命名空间
+defineComponent({
+  name: "yunweibao-LoadSettings",
+});
+
+const BottomSubmit = () => {
+  var arr = [...addCalibrationInfo.value];
+  var str = "";
+  arr.forEach((item) => {
+    str += "," + item.value1 + "," + item.value2;
+  });
+  str = "$WEGIHTCAL" + str;
+  postAN.ANsendSetting(str); // 载重列表
+  status.value = !status.value;
+  isSend.value = true;
+};
+
+const comConfirm = (items) => {
+  if (isSend.value) {
+    var comInfo = [...comAllCmdInfo.value];
+    var index = items.item[0];
+    comInfo[index -1] = items.item;
+     comInfo.forEach(item => {
+      var send = "$UARTSET," + item.toString();
+      postAN.ANsendSetting(send); // 串口信息设置
+    });
+    var send2 =  "$PREWEIGHT," + items.model;
+    postAN.ANsendSetting(send2); // 设置传感器
+  }
+};
+
+const deleteCalibrationInfoFn = () => {
+  var arr = addCalibrationInfo.value;
+  arr.filter((value, index, arr) => {
+    if (value.check) {
+      arr.splice(index);
+    }
+  });
+};
+
+const addCalibrationInfoFn = () => {
+  var arr = addCalibrationInfo.value;
+  loadCmdInfo.value[4] = +loadCmdInfo.value[4] + 1; // 标定数目
+  if (arr.length == 15) {
+    Toast.fail("最多15组");
+    return false;
+  }
+  arr.push({
+    check: false,
+    value1: "1",
+    value2: "1",
+  });
+};
+
+// 解析串口数据
+const getComInfo = (comCmd) => {
+  var comArr = [];
+  comCmd.forEach((item) => {
+    if (item.indexOf("52") !== -1) {
+      var its = item.split("~");
+      its[1] = its[0];
+      its[0] = "52";
+      cmdCmdInfo.value = its;
+    }
+    var it = item.split("~");
+    it[1] = it[1].split("*")[0];
+    comArr.push(it);
+  });
+  return comArr;
+};
+
+function getNewArray(array, subGroupLength) {
+  let index = 0;
+  let newArray = [];
+  while (index < array.length) {
+    newArray.push(array.slice(index, (index += subGroupLength)));
+  }
+  return newArray;
+}
+// 标定数目 解析数据
+const encodeCalibrationInfo = (calibrationCmd) => {
+  var arr = addCalibrationInfo.value;
+  if (calibrationCmd.length > 0) {
+    console.log("--------------///////");
+    var res = getNewArray(calibrationCmd, 2);
+    res.forEach((item) => {
+      arr.push({
+        check: false,
+        value1: item[0],
+        value2: item[1],
+      });
+    });
+  }
+};
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  maxNum.value++;
+  resultAll.value += cmds + "!";
+  if (maxNum.value == 3) {
+    var allcmd = resultAll.value.split("!");
+    var comCmd = allcmd[0].split(",").splice(1); // 串口指令
+    var loadCmd = allcmd[1].split(",").splice(1);
+    var calibrationCmd = allcmd[2].split(",").splice(1);
+
+    encodeCalibrationInfo(calibrationCmd);
+    console.log("-----------------+++++++++++++++++++++");
+    loadCmdInfo.value = loadCmd;
+    console.log(resultAll.value);
+    allcmd.pop(); // 去除最后一位的空值
+    comAllCmdInfo.value = getComInfo(comCmd);
+    return;
+  }
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$UARTSET");
+  setTimeout(() => {
+    postAN.ANSend("$PREWEIGHT");
+  }, 500);
+  setTimeout(() => {
+    postAN.ANSend("$WEGIHTCAL");
+  }, 1000);
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+.cell-group {
+  margin-top: 10px;
+}
+.checkbox {
+  margin-top: 0px;
+  margin-bottom: 15px;
+}
+.trInfo {
+  width: 30vh;
+  text-align: center;
+  height: 30px;
+}
+</style>

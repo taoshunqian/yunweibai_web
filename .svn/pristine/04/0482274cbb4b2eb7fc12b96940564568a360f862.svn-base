@@ -1,0 +1,196 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- <CellGroup inset style="margin-top: 10px">
+    <Cell title="硬盘"  />
+    <Cell >
+      <template #title>
+        <RadioGroup v-model="checked" direction="horizontal">
+          <Radio name="1" shape="square">主码流</Radio>
+          <Radio name="2" shape="square">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup> -->
+
+  <CellGroup inset style="margin-top: 10px">
+    <Cell value="循环覆盖" is-link>
+      <template #right-icon>
+        <CheckboxGroup v-model="coverInfoChecked" direction="horizontal">
+          <Checkbox name="1" shape="square">主码流</Checkbox>
+          <Checkbox name="2" shape="square">子码流</Checkbox>
+        </CheckboxGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup
+    inset
+    style="margin-top: 10px"
+    v-for="(item, index) in sessionInfo"
+    :key="index"
+  >
+    <Cell :value="item[0]" is-link>
+      <template #right-icon>
+        <RadioGroup v-model="sessionInfoChecked[index]" direction="horizontal">
+          <Radio name="1">主码流</Radio>
+          <Radio name="2">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  Cell,
+  RadioGroup,
+  Radio,
+  CellGroup,
+  Toast,
+  Checkbox,
+  CheckboxGroup,
+} from "vant"; // Checkbox
+import { postAN } from "@/utlis/AdApi";
+import { defineComponent, ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const navTitle = ref("存储设置");
+
+const coverInfoChecked = ref([]);
+const sessionInfoChecked = ref([]);
+const sessionInfo = ref([]);
+const coverInfo = ref([]);
+const supportDevice = [];
+const allDevice = ["HDD","HDD2","SD","SD2","EXT"];
+
+const BottomSubmit = () => {
+  var cheacked = coverInfoChecked.value;
+  var cmdArr = [...sessionInfo.value];
+  var cmdArr2 = [...coverInfo.value];
+  if (cheacked.includes("1")) {
+    cmdArr2[1] = "1";
+  } else {
+    cmdArr2[1] = "0";
+  }
+  if (cheacked.includes("2")) {
+    cmdArr2[2] = "1";
+  } else {
+    cmdArr2[2] = "0";
+  }
+  cmdArr.forEach((item, index) => {
+    if (sessionInfoChecked.value[index] == 1) {
+      item[1] = "1";
+      item[2] = "0";
+    } else {
+      item[2] = "1";
+      item[1] = "0";
+    }
+  });
+  var allCmd = [];
+  var num = 0;
+  for(var i=0;i<allDevice.length;i++) {
+    if(supportDevice.indexOf(allDevice[i]) !== -1) {
+      allCmd.push(cmdArr[num].join("*"));
+      num++;
+    }  else {
+      allCmd[i] = allDevice[i] +"*0*0";
+    }
+  }
+  var main = [];
+  var sub = [];
+  for(var j=0;j<allCmd.length;j++) {
+    var item = allCmd[j].split("*");
+    main.push(item[1]);
+    sub.push(item[2]);
+  }
+  var cmds = [cmdArr2[1],...main,cmdArr2[2],...sub];
+  cmds ="$STORAGE,"+ cmds.toString();
+  console.log(cmds);
+  postAN.ANsendSetting(cmds);
+};
+
+// 查询
+const BottomSearch = () => {
+  Toast(t("toast[0]"));
+  androidStatus_fn();
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-SessionSettings",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  console.log(str);
+  sessionInfo.value = [];
+  var cmds = str.split(";")[0];
+  let arr2 = [];
+  let arr1 = [];
+  var cmdArr = cmds.split(",").splice(1);
+  cmdArr.forEach((item) => {
+    var it = item.split("*");
+    if (item.indexOf("CIRCLE") !== -1) {
+      it.filter(function (value, index) {
+        if (value != 0 && index != 0) {
+         arr1.push(index.toString());
+        }
+      });
+      coverInfoChecked.value = [...arr1];
+      coverInfo.value = it;
+    } else {
+      supportDevice.push(it[0]);
+      it.filter(function (value, index) {
+        if (value != 0 && index != 0) {
+          arr2.push(index.toString());
+        }
+      });
+      sessionInfo.value.push(it);
+    }
+  });
+  sessionInfoChecked.value = arr2;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$STORAGE");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+.cell-group {
+  margin: 10px;
+}
+.checkbox {
+  margin-top: 0px;
+  margin-bottom: 15px;
+}
+.trInfo {
+  width: 30vh;
+  text-align: center;
+  height: 30px;
+}
+</style>

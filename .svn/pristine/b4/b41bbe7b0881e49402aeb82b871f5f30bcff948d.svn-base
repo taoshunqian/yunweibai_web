@@ -1,0 +1,52 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+
+  <CellGroup inset class="cell-group">
+    <Cell title="音频叠加">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup, Checkbox } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+
+const navTitle = ref("倒车影像");
+
+const checked = ref(true);
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

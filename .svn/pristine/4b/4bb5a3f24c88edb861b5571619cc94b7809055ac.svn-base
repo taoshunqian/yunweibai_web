@@ -1,0 +1,244 @@
+<template>
+  <!-- 合并式 -->
+  <div v-if="model == 1">
+    <CellGroup inset class="cell-group" style="margin-top: 10px">
+      <Collapse v-model="activeNames">
+        <CollapseItem  name="1" is-link>
+          <template #title>
+            <div>{{ title }}: <span style="color: #1989fa">WegtSn</span></div>
+          </template>
+
+          <!-- 图片显示 -->
+          <Grid :column-num="3" v-if="imageShow == true">
+            <GridItem>
+              <div class="active">
+                <VanImage
+                  src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg"
+                />
+                <span>WegtSn</span>
+              </div>
+            </GridItem>
+            <GridItem>
+              <div class="defultStyle">
+                <VanImage
+                  src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg"
+                />
+                <span>WegtSn2</span>
+              </div>
+            </GridItem>
+            <GridItem>
+              <div class="defultStyle">
+                <VanImage
+                  src="https://fastly.jsdelivr.net/npm/@vant/assets/cat.jpeg"
+                />
+                <span>WegtSn3</span>
+              </div>
+            </GridItem>
+          </Grid>
+          <!-- 型号设置界面 -->
+          <CellGroup inset class="cell-group">
+            <Cell
+              :title="item.title"
+              is-link
+              :value="item.value"
+              @click="showPickerFn(item.tipsIndex)"
+              v-for="(item, index) in titleColumns"
+              :key="index"
+              v-show="index > 0"
+            />
+          </CellGroup>
+        </CollapseItem>
+      </Collapse>
+    </CellGroup>
+  </div>
+
+  <!-- 分割式 -->
+  <div v-else>
+    <CellGroup
+      inset
+      class="cell-group cell-info"
+      v-for="(item, index) in titleColumns"
+      :key="index"
+    >
+      <Cell
+        :title="item.title"
+        is-link
+        :value="item.value"
+        @click="showPickerFn(item.tipsIndex)"
+      />
+    </CellGroup>
+  </div>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <AlarmPicker
+      :columns="columns"
+      @confirm="onConfirm"
+      @cancel="showPicker = false"
+    />
+  </Popup>
+</template>
+
+
+<script setup>
+import {
+  CellGroup,
+  Cell,
+  Popup,
+  CollapseItem,
+  Collapse,
+  Grid,
+  GridItem,
+  Image as VanImage,
+} from "vant"; // Checkbox
+import AlarmPicker from "@/components/Alarm//AlarmPicker.vue";
+import {
+  defineComponent,
+  ref,
+  defineProps,
+  watchEffect,
+  defineEmits,
+} from "vue";
+const porps = defineProps(["model", "status", "imageShow","title"]);
+const emit = defineEmits(["comConfirm"]);
+const activeNames = ref(["1"]);
+
+const defultVal = "请选择";
+
+const titleColumns = ref([
+  {
+    title: "型号",
+    value: defultVal,
+    tipsIndex: 2,
+  },
+  {
+    title: "串口号",
+    value: defultVal,
+    tipsIndex: 1,
+  },
+  {
+    title: "波特率",
+    value: defultVal,
+    tipsIndex: 3,
+  },
+  {
+    title: "数据位",
+    value: defultVal,
+    tipsIndex: 4,
+  },
+  {
+    title: "停止位",
+    value: defultVal,
+    tipsIndex: 5,
+  },
+  {
+    title: "校验位",
+    value: defultVal,
+    tipsIndex: 6,
+  },
+]);
+
+const model = ref(porps.model ?? 1); // 1.合并式 2.分割式
+const status = ref(porps.status ?? false); // 未使用
+const imageShow = ref(porps.imageShow ?? true); // 是否显示图片选择项
+const title = ref(porps.title ?? '型号'); // 标题
+
+console.log(imageShow.value);
+
+const columns = ref([]);
+const columnsCom = ["1", "2", "3", "4"]; // 波特率
+const columnsFunction = []; // 功能
+const columnsBps = [
+  "115200",
+  "57600",
+  "38400",
+  "19200",
+  "9600",
+  "4800",
+  "2400",
+  "1200",
+  "300",
+]; // 波特率
+const columnsDatabits = ["8位", "7位", "6位"]; // 波特率
+const columnsStopbits = ["1位", "2位", "3位"]; // 停止位
+const columnsCheckbits = ["无校验", "奇校验", "偶校验"]; // 停止位
+
+const showPicker = ref(false);
+const pockerIndex = ref(0);
+
+watchEffect(
+  async () => {
+    status.value = porps.status;
+    // imageShow.value = porps.imageShow;
+    getData();
+  },
+  { flush: "post" }
+);
+
+const getData = () => {
+  emit("comConfirm", titleColumns.value);
+};
+
+// 显示选择器
+const showPickerFn = (num) => {
+  pockerIndex.value = num;
+  switch (num) {
+    case 1:
+      columns.value = columnsCom;
+      break;
+    case 2:
+      columns.value = columnsFunction;
+      break;
+    case 3:
+      columns.value = columnsBps;
+      break;
+    case 4:
+      columns.value = columnsDatabits;
+      break;
+    case 5:
+      columns.value = columnsStopbits;
+      break;
+    case 6:
+      columns.value = columnsCheckbits;
+      break;
+  }
+  showPicker.value = true;
+};
+
+// 点击确认
+const onConfirm = (value) => {
+  showPicker.value = false;
+  let pocker = pockerIndex.value;
+  titleColumns.value.forEach((item) => {
+    if (item.tipsIndex == pocker) {
+      item.value = value;
+    }
+  });
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-AlarmConfig",
+});
+</script>
+
+<style scoped>
+.active {
+  border: 1px solid #1989fa;
+  border-radius: 5px;
+  overflow: hidden;
+  padding: 5px;
+  color: #1989fa;
+}
+.defultStyle {
+  border: 1px solid #eff2f5;
+  border-radius: 5px;
+  overflow: hidden;
+  padding: 5px;
+}
+.cell-info:first-child {
+  margin-top: 10px;
+}
+.cell-group {
+  margin-bottom: 10px;
+}
+</style>

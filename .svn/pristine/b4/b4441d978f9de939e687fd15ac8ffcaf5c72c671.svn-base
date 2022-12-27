@@ -1,0 +1,115 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset class="cell-group">
+    <Cell title="启用">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field label="ID" placeholder="ID 值" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field label="名称" placeholder="请输入名称" input-align="right" />
+  </CellGroup>
+  <CellGroup inset class="cell-group">
+    <Field label="温度上限" placeholder="请输入上限值" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field label="温度下限" placeholder="请输入下限值" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field
+      label="报警输出IO个数"
+      label-width="150"
+      placeholder="请输入IO个数"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field
+      label="上报频率"
+      label-width="150"
+      placeholder="请输入IO个数"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="温度上限报警功能" is-link value="请选择" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="温度下限报警功能" is-link value="请选择" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="蜂鸣器" is-link value="请选择" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="选择IO">
+      <template #right-icon>
+        <div style="width: 200px">
+          <CheckboxGroup v-model="checked" direction="horizontal">
+            <Checkbox
+              :name="item"
+              shape="square"
+              v-for="(item, index) in 8"
+              :key="index"
+              style="margin-bottom: 8px"
+              >{{ item }}</Checkbox
+            >
+          </CheckboxGroup>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup, Field, Checkbox, CheckboxGroup } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+
+const navTitle = ref("温度传感器 1");
+
+const checked = ref(["a", "b"]);
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-TemperatureSensingStateDetails",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin-top: 10px;
+}
+</style>

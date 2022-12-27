@@ -1,0 +1,94 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- <CellGroup inset class="cell-group">
+    <Cell title="启用">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup> -->
+
+  <CellGroup inset class="cell-group">
+    <Cell title="音频叠加">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="分辨率"  is-link value="请选择">
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="帧率"  is-link value="请选择">
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="位率类型"  is-link value="请选择">
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="位率"  is-link value="请选择">
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="画质"  is-link value="请选择">
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="编码标准"  is-link value="请选择">
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="存储大小"   value="500 G/H">
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup, Checkbox } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+
+const navTitle = ref("主/子码流 1");
+
+const checked = ref(true);
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

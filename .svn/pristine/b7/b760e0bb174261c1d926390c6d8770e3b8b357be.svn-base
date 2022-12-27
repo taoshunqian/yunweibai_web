@@ -1,0 +1,67 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset class="cell-group">
+    <Cell title="启用">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="视频通道" is-link value="请选择"> </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="触发开关" is-link value="请选择"> </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="视频输出" is-link value="请选择"> </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group" style="margin: 20px; height: 40px">
+    <Button type="primary"  block>设置区域</Button>
+  </CellGroup>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup, Checkbox, Button } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+
+const navTitle = ref("倒车影像");
+
+const checked = ref(true);
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

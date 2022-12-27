@@ -1,0 +1,157 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+  <AlarmConfig />
+
+  <CellGroup inset class="cell-group">
+    <Field
+      v-model="tel"
+      type="tel"
+      label="当前电压值"
+      label-width="120"
+      placeholder="请输入"
+      input-align="right"
+    >
+      <template #button>
+        <span>MV</span>
+      </template></Field
+    >
+    <Field
+      v-model="tel"
+      type="tel"
+      label="当前重量"
+      label-width="120"
+      placeholder="请输入"
+      input-align="right"
+    >
+      <template #button>
+        <span>KG</span>
+      </template>
+    </Field>
+  </CellGroup>
+
+  <!-- 标定数目 -->
+  <div style="margin-top: 20px; background: #ffffff">
+    <Row>
+      <Col span="16">
+        <CellGroup>
+          <Field
+            v-model="tel"
+            type="tel"
+            label="标定数目"
+            label-width="120"
+            placeholder="请输入标定数目"
+            input-align="right"
+          />
+        </CellGroup>
+      </Col>
+      <Col span="8">
+        <Button
+          type="danger"
+          size="small"
+          style="margin-right: 10px; margin-top: 6px; float: right"
+          >删除</Button
+        >
+        <Button
+          type="primary"
+          size="small"
+          style="float: right; margin-top: 6px; margin-right: 10px"
+          >添加</Button
+        >
+      </Col>
+    </Row>
+  </div>
+
+  <Row>
+    <Col offset="1" span="22">
+      <CellGroup
+        style="margin-top: 10px"
+        v-for="(item, index) in 2"
+        :key="index"
+      >
+        <Cell>
+          <template #title>
+            <Checkbox shape="square">序号 {{ item }}</Checkbox>
+          </template>
+        </Cell>
+        <Field
+          v-model="tel"
+          type="tel"
+          label="当前重量"
+          label-width="120"
+          placeholder="请输入"
+          input-align="right"
+        >
+          <template #button>
+            <span>KG</span>
+          </template>
+        </Field>
+        <Field
+          v-model="tel"
+          type="tel"
+          label="标定重量"
+          label-width="120"
+          placeholder="请输入"
+          input-align="right"
+        >
+          <template #button>
+            <span>KG</span>
+          </template>
+        </Field>
+      </CellGroup>
+    </Col>
+  </Row>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import AlarmConfig from "@/components/AlarmConfig.vue";
+import {
+  Col,
+  Row,
+  Cell,
+  Field,
+  CellGroup,
+  Button,
+  Checkbox,
+  
+} from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+
+const navTitle = ref("载重");
+
+
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-LoadSettings",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped>
+.cell-group {
+  margin-top: 10px;
+}
+.checkbox {
+  margin-top: 0px;
+  margin-bottom: 15px;
+}
+.trInfo {
+  width: 30vh;
+  text-align: center;
+  height: 30px;
+}
+</style>

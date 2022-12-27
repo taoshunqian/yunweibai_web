@@ -1,0 +1,250 @@
+<template>
+  <!-- 分割式 -->
+  <div v-if="(model = 2)">
+    <CellGroup
+      inset
+      class="cell-group cell-info"
+      v-for="(item, index) in titleColumns"
+      :key="index"
+      :style="isOilSelect && index == 5 ? 'display: none;' : ''"
+    >
+      <Cell
+        :title="item.title"
+        is-link
+        :value="item.value"
+        @click="showPickerFn(item)"
+      />
+    </CellGroup>
+  </div>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <AlarmPicker
+      :columns="columns"
+      @confirm="onConfirm"
+      :defaultIndex="defaultIndex"
+      @cancel="showPicker = false"
+    />
+  </Popup>
+</template>
+
+
+<script setup>
+import {
+  CellGroup,
+  Cell,
+  Popup,
+} from "vant"; // Checkbox
+import AlarmPicker from "@/components/Alarm//AlarmPicker.vue";
+import {
+  defineComponent,
+  ref,
+  defineProps,
+  watchEffect,
+  watch,
+  defineEmits,
+  reactive,
+} from "vue";
+const porps = defineProps([
+  "model",
+  "status",
+  "imageShow",
+  "title",
+  "columnShowItem",
+  "data",
+]);
+import { columnComInfo } from "@/utlis/QueryStr";
+import {
+  columnsBps,
+  columnsDatabits,
+  columnsStopbits,
+  columnsCheckbits,
+  columnsCheckbitsIndex,
+  columnOilType,
+  columnsCom
+} from "@/utlis/ConfigConst";
+import { Toast } from "vant";
+const emit = defineEmits(["comConfirm"]);
+const columnIndex = columnComInfo();
+const defultVal = "请选择";
+
+const titleColumns = reactive([
+  {
+    title: "型号",
+    value: defultVal,
+    tipsIndex: 2,
+  },
+  // {
+  //   title: "串口号",
+  //   value: defultVal,
+  //   tipsIndex: 1,
+  // },
+  {
+    title: "波特率",
+    value: defultVal,
+    tipsIndex: 3,
+  },
+  {
+    title: "数据位",
+    value: defultVal,
+    tipsIndex: 4,
+  },
+  {
+    title: "停止位",
+    value: defultVal,
+    tipsIndex: 5,
+  },
+  {
+    title: "校验位",
+    value: defultVal,
+    tipsIndex: 6,
+  },
+  {
+    title: "油位类型",
+    value: defultVal,
+    tipsIndex: 7,
+  },
+]);
+
+const model = ref(porps.model ?? 1); // 1.合并式 2.分割式
+const status = ref(porps.status ?? false); // 未使用
+const defaultIndex = ref(0);
+
+const columns = ref([]);
+
+const columnsFunction = ref([]); // 功能
+const isOilSelect = ref(true);
+const showPicker = ref(false);
+const pockerIndex = ref(0);
+const data = ref([]);
+
+watchEffect(
+  async () => {
+    columnsFunction.value = porps.columnShowItem;
+    var isOil = porps.data[0];
+    data.value = porps.data;
+    titleColumns.forEach((item, index) => {
+      item.value = porps.data[index];
+    });
+    if (isOil == "油位") {
+      selectModelOil();
+    }
+  },
+  { flush: "post" }
+);
+
+watch(porps, async () => {
+  status.value = porps.status;
+  getData();
+});
+
+const getData = () => {
+  var valArr = [...titleColumns];
+  var items = [];
+  for (var i in valArr) {
+    items.push(valArr[i].value);
+  }
+  items[0] = columnIndex.indexOf(items[0]);
+  var index4It = columnsCheckbits.indexOf(items[4]);
+  items[4] = columnsCheckbitsIndex[index4It];
+  if (items[0] == 3 && items.length == 6) {
+    items[5] = columnOilType.indexOf(items[5]);
+  } else {
+    items.pop();
+  }
+  emit("comConfirm", items);
+};
+
+// 显示选择器
+const showPickerFn = (item) => {
+  var num = item.tipsIndex;
+  var value = item.value;
+  pockerIndex.value = num;
+  if (isOilSelect.value && num == 7) {
+    Toast.fail("型号为油位才可勾选");
+    return false;
+  }
+  switch (num) {
+    case 1:
+      columns.value = columnsCom;
+      break;
+    case 2:
+      columns.value = columnsFunction.value;
+      break;
+    case 3:
+      columns.value = columnsBps;
+      break;
+    case 4:
+      columns.value = columnsDatabits;
+      break;
+    case 5:
+      columns.value = columnsStopbits;
+      break;
+    case 6:
+      columns.value = columnsCheckbits;
+      break;
+    case 7:
+      columns.value = columnOilType;
+      break;
+  }
+  defaultIndex.value = columns.value.indexOf(value);
+  showPicker.value = true;
+};
+
+// 判断是否 油位类型显示
+const selectModelOil = (num) => {
+  var val = porps.data[5] ?? num;
+
+  if (val == undefined || porps.data[0] != 3) {
+    isOilSelect.value = false;
+  } else {
+    isOilSelect.value = true;
+  }
+  titleColumns[5].value = columnOilType[val];
+};
+
+// picker 点击  确认
+const onConfirm = (value) => {
+  showPicker.value = false;
+  let pocker = pockerIndex.value;
+  titleColumns.forEach((item) => {
+    if (item.tipsIndex == pocker) {
+      item.value = value[0];
+    }
+  });
+  if (pocker == 2) {
+    if (value[0] == "油位") {
+      selectModelOil(0);
+    } else {
+      isOilSelect.value = true;
+      console.log("触发 ----------------------");
+    }
+  }
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-AlarmConfig",
+});
+</script>
+
+<style scoped>
+.active {
+  border: 1px solid #1989fa;
+  border-radius: 5px;
+  overflow: hidden;
+  padding: 5px;
+  color: #1989fa;
+}
+.defultStyle {
+  border: 1px solid #eff2f5;
+  border-radius: 5px;
+  overflow: hidden;
+  padding: 5px;
+}
+.cell-info:first-child {
+  margin-top: 10px;
+}
+.cell-group {
+  margin-bottom: 10px;
+}
+</style>

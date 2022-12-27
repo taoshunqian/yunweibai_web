@@ -1,0 +1,146 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    class="cell-group"
+    v-for="(item, index) in comInfo"
+    :key="index"
+    @click="getRouter(item)"
+  >
+    <Cell :title="'序号 ' + item[0]" />
+    <Cell>
+      <template #title>
+        <ul>
+          <li>
+            功能: <span>{{ item[1] }}</span>
+          </li>
+          <li>
+            波特率: <span>{{ item[2] }}</span>
+          </li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+          <li>
+            数据位: <span>{{ item[3] }}</span>
+          </li>
+          <li>
+            停止位: <span>{{ item[4] }}</span>
+          </li>
+          <li>
+            校验位:
+            <span style="color: green">{{ filterABtn(item[5]) }}</span>
+          </li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup, Toast } from "vant";
+import { postAN } from "@/utlis/AdApi";
+import { defineComponent, ref, onMounted } from "vue";
+import { columnComInfo } from "@/utlis/QueryStr";
+import router from "@/router";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+const columnIndex = columnComInfo();
+
+const navTitle = ref("串口设置");
+const comInfo = ref([]);
+const status = ref(true);
+
+const filterABtn = (num) => {
+  var str = "";
+  switch (num) {
+    case "78":
+      str = "无校验";
+      break;
+    case "79":
+      str = "奇校验";
+      break;
+    case "69":
+      str = "偶校验";
+      break;
+  }
+  return str;
+};
+
+const getRouter = (item) => {
+  router.push({
+    path: "/ComInfo",
+    query: {
+      index: item[0]
+    },
+  });
+};
+
+const BottomSubmit = () => {
+  status.value = !status.value;
+};
+const BottomSearch = () => {
+  androidStatus_fn();
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-ComSettings",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  // console.warn(cmdArr);
+  var allArr = [];
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("~");
+    var itIndex = item[1].split("*");
+    var activeIndex = itIndex[0];
+    item[1] = columnIndex[activeIndex];
+    allArr.push(item);
+  }
+  comInfo.value = allArr;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  console.warn(str);
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$UARTSET");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin-top: 10px;
+}
+</style>

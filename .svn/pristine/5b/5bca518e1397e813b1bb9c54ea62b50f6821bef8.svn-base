@@ -1,0 +1,46 @@
+
+# title: 二期完成目标
+# lastTime: 22022/12/30
+
+## 2022/12/23 对接状态
+    +1 
+        *1. IO输入设置 ----- $IOINFO  ------     对接完成
+        *2. IO输出设置 ----- $ALARMOUT ------   对接完成
+    +2
+        * 1. 透传、声光报警、油位、胎压、载重、云台、刷卡器、G-mouse       ----- $UARTSET(获取串口信息)， 获取数据列表未知
+    +3
+        * 1 温度列表 , 详情    -------  对接完成[ 详情设置失败，可以设备不支持 ]
+        * 2 正反转             ------  一期已完成
+        * 3 举升, 顶盖, 门磁   -------   
+        * 4 倒车影像           -------   
+        * 1 主码流 , 子码流      ------- $MAINRECORDV3,$SUBRECORDV3 -------  对接完成（缺少存储大小，应用需要添加）
+        * 2 存储位置           ------- $ALARMOUT ------  对接完成
+
+## 2022/12/22 指令收集
+    +1 
+        *1. IO输入设置 ----- $IOINFO 
+        *2. IO输出设置 ----- $ALARMOUT ------  "AlarmOutput@$ALARMOUT@0@2@IO输出设置@8@treeDemo_17"
+    +2
+        * 1. 透传、声光报警、油位、胎压、载重、云台、刷卡器、G-mouse       ----- $UARTSET(获取串口信息)， 获取数据列表未知
+    +3
+        * 1 温度列表 , 详情    -------  $ONEWIRETABLE   $ONEWIRETEMPERAGET --------  "TemperatureSensingState@$ONEWIRETABLE@0@2@温度列表@8@treeDemo_17"
+        * 2 正反转             ------   $ROTATESENSOR  ---------- 一期已完成
+        * 3 举升, 顶盖, 门磁   -------   未知(可能是 $IOINFO)
+        * 4 倒车影像           -------   $REARCAMERA,  --------  "ReversingCamera@$REARCAMERA@0@2@倒车影像@8@treeDemo_17"
+    +4 
+        * 1 主码流 , 子码流      -------  $MAINRECORDV3 , $SUBRECORDV3 --------  "CodeStream@$MAINRECORDV3@0@2@主码流@8@treeDemo_17@1", "CodeStream@$SUBRECORDV3@0@2@子码流@8@treeDemo_17@2"
+        * 2 存储位置           -------   $STORAGE -------  "SessionSettings@$STORAGE@0@2@存储位置@8@treeDemo_17"
+
+
+
+## 2022/12/22 UI 初步定稿
+
+    1、IO输入设置、IO输出设置 ----- 原型图编辑完成
+
+    2、串口外设：透传、声光报警、油位、胎压、载重、云台、刷卡器、G-mouse    ----- 原型图编辑完成
+    
+    3、io外设： 温度、正反转，举升、顶盖、门磁   ----- 原型图编辑完成 
+    倒车影像、 --------- 未编辑
+    
+    4、录像存储管理：主码流、子码流，存储位置  ----- 原型图编辑完成
+

@@ -1,0 +1,137 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset class="cell-group">
+    <Cell title="总计存储大小">
+      <template #right-icon>
+        <span style="color: green">4.58 G/H</span>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup
+    inset
+    class="cell-group"
+    v-for="(item, index) in CodeStreamInfo"
+    :key="index"
+    @click="getRouter(item)"
+  >
+    <Cell :title="'通道 ' + item[0]" />
+    <Cell>
+      <template #title>
+        <ul>
+          <li>分辨率: <span>{{  columnPower[item[3]] }}</span></li>
+          <li>帧率: <span>{{ item[4] }}</span></li>
+          <li>音频: <span style="color: green">{{ item[2] == "1" ? "启用" : "禁用" }}</span></li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+          <li>编码标准: <span>{{ columnVideo[getVideoEnCode(item[8])] }}</span></li>
+          <li>画质: <span>{{ columnImage[item[7]] }}</span></li>
+          <li>存储大小: <span style="color: green">0.58 G/H</span></li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+  <StickyBottom />
+</template>
+
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup,Toast } from "vant";
+import { postAN } from "@/utlis/AdApi";
+import { getQueryString } from "@/utlis/QueryStr";
+import { defineComponent, ref, onMounted } from "vue";
+import router from "@/router";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const navTitle = ref("主/子码流");
+let showType = 0;
+const CodeStreamInfo = ref([]);
+const columnPower = ["D1","CIF","QCIF","960H","HALF_D1","720P","1080P","1080N","720N","960P"];
+const columnImage = ["很差","较差","一般","好","很好","最好"];
+const columnVideo = ["H264","H264+","H265","H265+"];
+
+const getVideoEnCode = (value) => {
+  var code = value.split(":")[0];
+  return code;
+}
+
+const getRouter = (item) => {
+  console.log(showType);
+  router.push({
+    path: "/CodeStreamDetails",
+    query: {
+      channel: item[0],
+      type: showType
+    },
+  });
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  var cmdItem = [];
+  cmdArr.forEach(item => {
+    var it = item.split("#");
+    cmdItem.push(it);
+  })
+  CodeStreamInfo.value = cmdItem;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  try {
+    var param = getQueryString("param").split("@"); // 解析出指令 // .split("@")
+    var type = param[param.length - 1];
+    showType = type;
+    if(type == 1) {
+      navTitle.value = "主码流";
+      postAN.ANSend("$MAINRECORDV3");
+    } else {
+      navTitle.value = "子码流";
+      postAN.ANSend("$SUBRECORDV3");
+    }
+    return;
+  } catch (e) {
+    console.log(e);
+  }
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

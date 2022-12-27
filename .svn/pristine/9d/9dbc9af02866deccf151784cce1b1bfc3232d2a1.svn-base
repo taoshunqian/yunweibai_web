@@ -1,0 +1,197 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <AlarmConfig
+    :data="itemCmd"
+    :columnShowItem="columnShowItem"
+    @comConfirm="comConfirm"
+    :status="status"
+  />
+
+  <!-- <CellGroup inset class="cell-group">
+    <Cell title="选择通道" is-link value="内容" />
+  </CellGroup> -->
+
+  <CellGroup inset class="cell-group">
+    <Cell
+      title="协议类型"
+      is-link
+      :value="columnAgreementType[useCmd[5]]"
+      @click="showPickerFn(1)"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field
+      label="解码器地址"
+      label-width="120"
+      placeholder="请输入解码器地址"
+      v-model="useCmd[6]"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell
+      title="流控"
+      is-link
+      :value="columnSteam[useCmd[7]]"
+      @click="showPickerFn(2)"
+    />
+  </CellGroup>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <AlarmPicker
+      :columns="columns"
+      :showPicker="showPicker"
+      :defaultIndex="defaultIndex"
+      @confirm="onConfirm"
+      @cancel="showPicker = false"
+    />
+  </Popup>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import AlarmConfig from "@/components/AlarmConfig.vue";
+import AlarmPicker from "@/components/Alarm//AlarmPicker.vue";
+import { CellGroup, Cell, Field, Toast, Popup } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { filterABtn } from "@/utlis/QueryStr";
+import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
+let route = useRoute();
+const { t } = useI18n();
+import { postAN } from "@/utlis/AdApi";
+
+const channel = route.query.channel;
+
+const navTitle = ref("云台通道 " + channel);
+const columnAgreementType = ["Pelco-D", "Pelco-p", "B01", "Samsung"];
+const columnsCheckbitsIndex = ["78", "79", "69"]; // 停止位
+const columnSteam = ["无", "Xon/Xoff"];
+const showPicker = ref(false);
+const columns = ref([]);
+const defaultIndex = ref(0);
+const setValueIndex = ref(0);
+
+const allCmd = ref([]);
+const useCmd = ref([]);
+const itemCmd = ref([]);
+const status = ref(true); // 状态更新
+const isSend = ref(false); // 是否允许设置参数
+const columnShowItem = ref(["云台"]);
+
+const BottomSearch = () => {
+  androidStatus_fn();
+  isSend.value = false;
+};
+
+// 弹出 picker 选择器
+const showPickerFn = (num) => {
+  showPicker.value = true;
+  switch (num) {
+    case 1: // 协议类型
+      columns.value = columnAgreementType;
+      defaultIndex.value = columnAgreementType[useCmd.value[5]];
+      setValueIndex.value = 1;
+      break;
+    case 2: // 流控
+      columns.value = columnSteam;
+      defaultIndex.value = columnSteam[useCmd.value[7]];
+      setValueIndex.value = 2;
+      break;
+  }
+};
+
+// 保存
+const BottomSubmit = () => {
+  status.value = !status.value;
+  isSend.value = true;
+};
+
+// 点击保存 激活 公共模板回调
+const comConfirm = (item) => {
+  var ix = channel - 1;
+  if (isSend.value) {
+    var useCmdArr = [...useCmd.value];
+    useCmdArr.splice(1,4)
+    item.shift();
+    item[3] = columnsCheckbitsIndex.indexOf(item[3]);
+    useCmdArr.splice(1,0,...item);
+    var resCmdArr = [...allCmd.value];
+    resCmdArr[ix] = useCmdArr.join("*");
+    var cmd = "$YUNTAIPARAM," + resCmdArr.toString();
+    console.log(cmd);
+    postAN.ANsendSetting(cmd);
+  }
+};
+
+// picker 弹出层确认
+const onConfirm = (items) => {
+  console.log(items);
+  if (setValueIndex.value == 1) {
+    useCmd.value[5] = items[1];
+  } else if (setValueIndex.value == 2) {
+    useCmd.value[7] = items[1];
+  }
+  showPicker.value = false;
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-PTZInfo",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  var cmdItem = cmdArr[channel - 1].split("*");
+  useCmd.value = cmdItem;
+
+  var item = [
+    "云台",
+    cmdItem[1],
+    cmdItem[2],
+    cmdItem[3],
+    filterABtn(cmdItem[4]),
+  ];
+  itemCmd.value = item;
+  allCmd.value = cmdArr;
+  console.warn(cmdItem);
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$YUNTAIPARAM");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+.cell-group {
+  margin-top: 10px;
+}
+</style>

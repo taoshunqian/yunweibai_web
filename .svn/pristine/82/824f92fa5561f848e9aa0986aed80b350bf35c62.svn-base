@@ -1,0 +1,122 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- <table style="border: 1px solid #cdcdcd">
+    <tr>
+      <td class="trInfo">名称</td>
+      <td class="trInfo">主码流</td>
+      <td class="trInfo">子码流</td>
+    </tr>
+
+    <tr>
+      <td class="trInfo">名称</td>
+      <td class="trInfo">
+        <CheckboxGroup v-model="checked">
+          <Checkbox name="a">循环覆盖</Checkbox>
+          <Checkbox name="b">灾备</Checkbox>
+          <Checkbox name="b">HDD</Checkbox>
+          <Checkbox name="b">HDD2</Checkbox>
+        </CheckboxGroup>
+      </td>
+      <td class="trInfo">
+        <CheckboxGroup v-model="checked">
+          <Checkbox name="a">循环覆盖</Checkbox>
+          <Checkbox name="b">灾备</Checkbox>
+          <Checkbox name="b">HDD</Checkbox>
+          <Checkbox name="b">HDD2</Checkbox>
+        </CheckboxGroup>
+      </td>
+    </tr>
+  </table> -->
+
+  <Row >
+    <Col offset="1" span="22">
+      <CellGroup style="margin-top: 10px">
+        <Collapse v-model="activeNames">
+          <CollapseItem title="主码流" name="1">
+            <CheckboxGroup v-model="checked" direction="horizontal">
+              <Checkbox name="a" shape="square" class="checkbox"
+                >循环覆盖</Checkbox
+              >
+              <Checkbox name="b" shape="square" class="checkbox">灾备</Checkbox>
+              <Checkbox name="c" shape="square" class="checkbox">HDD</Checkbox>
+              <Checkbox name="d" shape="square" class="checkbox">HDD2</Checkbox>
+              <Checkbox name="c" shape="square" class="checkbox">SD</Checkbox>
+              <Checkbox name="d" shape="square" class="checkbox">SD2</Checkbox>
+            </CheckboxGroup>
+          </CollapseItem>
+        </Collapse>
+      </CellGroup>
+
+      <CellGroup style="margin-top: 10px">
+        <Collapse v-model="activeNames">
+          <CollapseItem title="子码流" name="2">
+            <CheckboxGroup v-model="checked" direction="horizontal">
+              <Checkbox name="a" shape="square" class="checkbox"
+                >循环覆盖</Checkbox
+              >
+              <Checkbox name="b" shape="square" class="checkbox">灾备</Checkbox>
+              <Checkbox name="c" shape="square" class="checkbox">HDD</Checkbox>
+              <Checkbox name="d" shape="square" class="checkbox">HDD2</Checkbox>
+              <Checkbox name="c" shape="square" class="checkbox">SD</Checkbox>
+              <Checkbox name="d" shape="square" class="checkbox">SD2</Checkbox>
+            </CheckboxGroup>
+          </CollapseItem>
+        </Collapse>
+      </CellGroup>
+    </Col>
+  </Row>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import {
+  Checkbox,
+  CheckboxGroup,
+  Collapse,
+  CollapseItem,
+  Col,
+  Row,
+  CellGroup,
+} from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+
+const navTitle = ref("存储设置");
+
+const activeNames = ref(["1", "2"]);
+const checked = ref([]);
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-SessionSettings",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped>
+.cell-group {
+  margin: 10px;
+}
+.checkbox {
+  margin-top: 0px;
+  margin-bottom: 15px;
+}
+.trInfo {
+  width: 30vh;
+  text-align: center;
+  height: 30px;
+}
+</style>

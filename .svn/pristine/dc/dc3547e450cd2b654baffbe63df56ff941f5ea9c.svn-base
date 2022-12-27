@@ -1,0 +1,100 @@
+<template>
+  <CellGroup inset class="cell-group">
+    <Cell title="串口号" is-link value="" @click="showPickerFn(1)" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="功能" is-link value="" @click="showPickerFn(2)" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="波特率" is-link value="" @click="showPickerFn(3)" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="数据位" is-link value="" @click="showPickerFn(4)" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="停止位" is-link value="" @click="showPickerFn(5)" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="校验位" is-link value="" @click="showPickerFn(6)" />
+  </CellGroup>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <AlarmPicker :columns="columns" @confirm="onConfirm" @cancel="showPicker = false" />
+  </Popup>
+</template>
+
+
+<script setup>
+import { CellGroup, Cell, Popup } from "vant"; // Checkbox
+import AlarmPicker from "@/components/Alarm//AlarmPicker.vue";
+import { defineComponent, ref} from "vue";
+
+const columns = ref([]);
+const columnsCom = ["1", "2", "3", "4"]; // 波特率
+const columnsFunction = ["无", "你好"]; // 功能
+const columnsBps = [
+  "115200",
+  "57600",
+  "38400",
+  "19200",
+  "9600",
+  "4800",
+  "2400",
+  "1200",
+  "300",
+]; // 波特率
+const columnsDatabits = ["8位", "7位", "6位"]; // 波特率
+const columnsStopbits = ["1位", "2位", "3位"]; // 停止位
+const columnsCheckbits = ["无校验", "奇校验", "偶校验"]; // 停止位
+
+const showPicker = ref(false);
+const pockerIndex = ref(0);
+
+// 显示选择器
+const showPickerFn = (num) => {
+  pockerIndex.value = num;
+  switch (num) {
+    case 1:
+      columns.value = columnsCom;
+      break;
+    case 2:
+      columns.value = columnsFunction;
+      break;
+    case 3:
+      columns.value = columnsBps;
+      break;
+    case 4:
+      columns.value = columnsDatabits;
+      break;
+    case 5:
+      columns.value = columnsStopbits;
+      break;
+    case 6:
+      columns.value = columnsCheckbits;
+      break;
+  }
+  showPicker.value = true;
+};
+
+// 点击确认
+const onConfirm = (value) => {
+  showPicker.value = false;
+  console.log(value);
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-AlarmConfig",
+});
+</script>
+
+<style scoped>
+.cell-group {
+  margin: 10px;
+}
+</style>

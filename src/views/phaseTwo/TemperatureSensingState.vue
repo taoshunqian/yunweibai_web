@@ -1,0 +1,124 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset class="cell-group" v-for="(item,index) in OnewireTable" :key="index" @click="getRouter(item)">
+    <Cell :title="'温感 ' + item[0]" />
+    <Cell>
+      <template #title>
+        <ul>
+          <li>状态:  <span>{{ filterStatus(item[4]) }}</span></li>
+          <li>名称: <span>{{  filterBasic(item[2]) }}</span></li>  
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+            <li>温度: <span >{{ filterBasic(item[3]) }}</span></li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import { Cell,  CellGroup,Toast } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+import router from "@/router";
+
+const navTitle = ref("温感状态");
+const OnewireTable = ref([]);
+
+const getRouter = (item) => {
+    router.push({
+      path: "/TemperatureSensingStateDetails",
+      query: {
+        number: item[0]
+      },
+    });
+}
+
+// 过滤状态
+const filterStatus = (e) => {
+  var coloumn = ['禁用' ,'丢失', '正常'];
+  var str = "";
+  var index = coloumn.indexOf(e);
+  if(index == -1) {
+    str = filterBasic(index);
+  } else {
+    str = coloumn[index];
+  }
+  return str;
+}
+// 过滤其它
+const filterBasic = (e) => {
+  var str = "";
+  if(e == -1) {
+    str = "--";
+  } else {
+    str = e;
+  }
+  return str;
+}
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-TemperatureSensingState",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  console.log(cmdArr)
+  if(cmdArr.length == 1) {
+    Toast.fail("该设备未定制温感功能");
+    return;
+  }
+  var cmdItem = [];
+  cmdArr.forEach(item => {
+    var it = item.split("~");
+    cmdItem.push(it);
+  })
+  OnewireTable.value = cmdItem;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  console.warn(str);
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+   postAN.ANSend("$ONEWIRETABLE");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+    li {
+        margin-bottom: 5px;
+    }
+}
+.cell-group {
+  margin-top: 10px;
+}
+
+</style>

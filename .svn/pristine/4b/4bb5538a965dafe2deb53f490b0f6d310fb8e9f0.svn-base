@@ -1,0 +1,125 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- <CellGroup inset style="margin-top: 10px">
+    <Cell title="硬盘"  />
+    <Cell >
+      <template #title>
+        <RadioGroup v-model="checked" direction="horizontal">
+          <Radio name="1" shape="square">主码流</Radio>
+          <Radio name="2" shape="square">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup> -->
+
+  <CellGroup inset style="margin-top: 10px">
+    <Cell value="循环覆盖" is-link>
+      <template #right-icon>
+        <RadioGroup v-model="checked" direction="horizontal">
+          <Radio name="1" shape="square">主码流</Radio>
+          <Radio name="2" shape="square">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin-top: 10px">
+    <Cell value="灾备" is-link>
+      <template #right-icon>
+        <RadioGroup v-model="checked" direction="horizontal">
+          <Radio name="1" shape="square">主码流</Radio>
+          <Radio name="2" shape="square">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin-top: 10px">
+    <Cell value="HDD" is-link>
+      <template #right-icon>
+        <RadioGroup v-model="checked" direction="horizontal">
+          <Radio name="1" shape="square">主码流</Radio>
+          <Radio name="2" shape="square">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin-top: 10px">
+    <Cell value="HDD 2" is-link>
+      <template #right-icon>
+        <RadioGroup v-model="checked" direction="horizontal">
+          <Radio name="1" shape="square">主码流</Radio>
+          <Radio name="2" shape="square">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin-top: 10px">
+    <Cell value="SD " is-link>
+      <template #right-icon>
+        <RadioGroup v-model="checked" direction="horizontal">
+          <Radio name="1" shape="square">主码流</Radio>
+          <Radio name="2" shape="square">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset style="margin-top: 10px">
+    <Cell value="SD 2" is-link>
+      <template #right-icon>
+        <RadioGroup v-model="checked" direction="horizontal">
+          <Radio name="1" shape="square">主码流</Radio>
+          <Radio name="2" shape="square">子码流</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, RadioGroup, Radio, CellGroup } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+
+const navTitle = ref("存储设置");
+
+const checked = ref([]);
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-SessionSettings",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped>
+.cell-group {
+  margin: 10px;
+}
+.checkbox {
+  margin-top: 0px;
+  margin-bottom: 15px;
+}
+.trInfo {
+  width: 30vh;
+  text-align: center;
+  height: 30px;
+}
+</style>

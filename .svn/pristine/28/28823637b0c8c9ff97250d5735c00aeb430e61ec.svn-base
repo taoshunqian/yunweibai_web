@@ -1,0 +1,86 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset class="cell-group">
+    <Cell title="总计存储大小">
+      <template #right-icon>
+        <span style="color: green">4.58 G/H</span>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup
+    inset
+    class="cell-group"
+    v-for="(item, index) in 3"
+    :key="index"
+    @click="getRouter(item)"
+  >
+    <Cell :title="'通道 ' + item" />
+    <Cell>
+      <template #title>
+        <ul>
+          <li>分辨率: <span>720P</span></li>
+          <li>帧率: <span>15</span></li>
+          <li>音频: <span style="color: green">启用</span></li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+          <li>编码标准: <span>H264</span></li>
+          <li>画质: <span>一般</span></li>
+          <li>存储大小: <span style="color: green">0.58 G/H</span></li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import router from "@/router";
+
+const navTitle = ref("主/子码流");
+
+const getRouter = (item) => {
+  console.log(item);
+  router.push({
+    path: "/CodeStreamDetails",
+    query: {},
+  });
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

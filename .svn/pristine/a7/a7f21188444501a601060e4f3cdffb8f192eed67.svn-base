@@ -1,0 +1,151 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- <CellGroup inset class="cell-group">
+    <Cell title="启用">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup> -->
+
+  <CellGroup inset class="cell-group">
+    <Cell title="音频叠加">
+      <template #right-icon>
+        <Checkbox v-model="checked" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="分辨率" is-link :value="columnPower[renderData[3]]"> </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field v-model="renderData[4]" label="帧率" type="number" placeholder="请输入" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="位率类型" is-link :value="colimnBitrate[renderData[5]]"> </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Field v-model="renderData[6]" label="位率" type="number" placeholder="请输入" input-align="right" />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="画质" is-link :value="columnImage[renderData[7]]"> </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="编码标准" is-link :value="columnVideo[renderData[8]]"> </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="存储大小" value="500 G/H"> </Cell>
+  </CellGroup>
+
+  <StickyBottom @BottomSearch="BottomSearch" />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell, CellGroup, Checkbox, Toast,Field } from "vant"; // Checkbox
+import { postAN } from "@/utlis/AdApi";
+import { defineComponent, ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+let route = useRoute();
+const channel = route.query.channel;
+const type = route.query.type;
+
+const columnPower = ["D1","CIF","QCIF","960H","HALF_D1","720P","1080P","1080N","720N","960P"];
+const columnImage = ["很差","较差","一般","好","很好","最好"];
+const columnVideo = ["H264","H264+","H265","H265+"];
+const colimnBitrate = ["定码率", "变码率"];
+
+const navTitle = ref("主/子码流 1");
+const renderData = ref([]);
+const checked = ref(true);
+
+const encodeData = (cmdArr) => {
+  var allItem = [];
+  cmdArr.forEach((item) => {
+    var it8 = item[8].split(":")[0];
+    var it = item.slice(0,8);
+    it.push(it8);
+    allItem.push(it);
+  })
+  return allItem;
+}
+const BottomSearch =() => {
+  androidStatus_fn();
+}
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  renderData.value = [];
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  var cmdItems = [];
+  cmdArr.forEach((item) => {
+    var it = item.split("#");
+    cmdItems.push(it);
+  });
+  renderData.value = encodeData(cmdItems)[channel - 1];
+  checked.value = !!renderData.value[2];
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  try {
+    if (type == 1) {
+      navTitle.value = "主码流 通道" + channel;
+      postAN.ANSend("$MAINRECORDV3");
+    } else {
+      navTitle.value = "子码流 通道" + channel;
+      postAN.ANSend("$SUBRECORDV3");
+    }
+    return;
+  } catch (e) {
+    console.log(e);
+  }
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

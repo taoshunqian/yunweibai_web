@@ -1,0 +1,71 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset class="cell-group" v-for="(item,index) in 2" :key="index" @click="getRouter(item)">
+    <Cell :title="'温感 ' + item" />
+    <Cell>
+      <template #title>
+        <ul>
+            <li>串口号: <span>COM {{ item }}</span></li>
+            <li>状态: <Tag type="success">启用</Tag></li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+            <li>波特率: <span>9600</span></li>
+            <li>上报频率: <span ></span></li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom
+    :guide="guide"
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    @BottomNext="BottomNext"
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import { Cell,  CellGroup, Tag } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import router from "@/router";
+
+const navTitle = ref("温感状态");
+
+
+const getRouter = (item) => {
+    console.log(item);
+    router.push({
+      path: "/TemperatureSensingStateDetails",
+      query: {
+      },
+    });
+}
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-TemperatureSensingState",
+});
+
+onMounted(() => {});
+</script>
+
+<style scoped lang="scss">
+ul {
+    li {
+        margin-bottom: 5px;
+    }
+}
+.cell-group {
+  margin-top: 10px;
+}
+
+</style>
