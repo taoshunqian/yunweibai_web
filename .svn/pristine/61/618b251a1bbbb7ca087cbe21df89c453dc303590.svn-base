@@ -1,0 +1,106 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- <AlarmConfig  /> -->
+
+  <CellGroup inset class="cell-group" v-for="(item,index) in tyrepressureInfo" :key="index" @click="getRouter(item)">
+    <Cell :title="'传感器序号 ' + item[0]" />
+    <Cell>
+      <template #title>
+        <ul>
+            <li>传感器名称: <span>{{item[1]}}</span></li>
+            <li>当前胎压: <span>{{ item[2] }} Kpa</span></li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+            <li>当前胎温: {{ item[3] }} </li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  
+
+
+  <StickyBottom
+  />
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+// import AlarmConfig from "@/components/AlarmConfig.vue";
+import { Cell,  CellGroup,Toast } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import router from "@/router";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+import { postAN } from "@/utlis/AdApi";
+const navTitle = ref("胎压");
+const tyrepressureInfo = ref([]);
+
+const getRouter = (item) => {
+    console.log(item);
+    router.push({
+      path: "/TyrepressureDerails",
+      query: {
+        index : item[0]
+      },
+    });
+}
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  // alert(str)
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  console.warn(cmdArr);
+  var allArr = [];
+  cmdArr.forEach((item) => {
+    allArr.push(item.split("*"));
+  })
+  tyrepressureInfo.value = allArr;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$TPMSTABLE");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+    li {
+        margin-bottom: 5px;
+    }
+}
+.cell-group {
+  margin-top: 10px;
+}
+
+</style>

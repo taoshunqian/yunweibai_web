@@ -75,7 +75,7 @@
       $t("netWork3g4g.button[0]")
     }}</Button>
   </CellGroup>
-  <div class="van-ellipsis fontSize">
+  <div class=" fontSize">
     {{
       $t("netWork3g4g.note")
     }}
@@ -190,10 +190,11 @@ onMounted(() => {
 
 <style>
 .fontSize {
-  font-family: PingFangSC-Regular, PingFang SC;
   font-weight: 400;
   color: #999999;
   font-size: 12px;
+  width: 95%;
+  margin: auto;
   text-align: center;
   
 }

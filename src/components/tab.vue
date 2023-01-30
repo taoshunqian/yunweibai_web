@@ -1,10 +1,15 @@
 <template>
-  <Sticky  >
-    <NavBar :title="porps.navTitle" v-if="porps.leftArrow" :safe-area-inset-top="true" :style="[style]" />
+  <Sticky>
+    <NavBar
+      :title="porps.navTitle"
+      v-if="porps.leftArrow"
+      :safe-area-inset-top="true"
+      :style="[style]"
+    />
     <NavBar
       :title="porps.navTitle"
       :left-text="$t('tab.leftText')"
-      right-text="  "
+      :right-text="rightTextInfo"
       left-arrow
       @click-left="onClickLeft"
       @click-right="onClickRight"
@@ -22,23 +27,55 @@ import router from "@/router";
 import { NavBar, Sticky, Dialog } from "vant";
 import { defineComponent, defineProps, ref } from "vue";
 import { postAN } from "@/utlis/AdApi";
-
+import { getQueryString } from "@/utlis/QueryStr";
 const porps = defineProps(["navTitle", "leftArrow", "lavelMuch"], true);
 const lavelMuch = porps.lavelMuch || false;
+import { useI18n } from "vue-i18n";
 
 const index = sessionStorage.guideIndex;
 const model = sessionStorage.model;
-
-let number = 0;
-
-const style = ref("backgroud:#ffffff;");
-if (model == "Ios") {
-  style.value = "padding-top: 30px;";
-}
-
-import { useI18n } from "vue-i18n";
+const wifiName = ref(getQueryString("wifiName") ?? "");
+const state = ref(getQueryString("type") ?? "");
+const rightTextInfo = ref("");
 const { t } = useI18n();
 
+let number = 0;
+const style = ref("backgroud:#ffffff;fon");
+// wifi状态
+const stateInfo = (num) => {
+  // const stateLang = t("netWork3g4g.label");
+  // var numArr = ['1','499','500','501','502','600','601']
+  console.warn(num);
+  var str = "";
+  // var index = numArr.indexOf(num);
+  // console.warn(stateLang)
+  // str = stateLang[index];
+  return str;
+};
+// 设置wifi信息
+const setWifiInfo = () => {
+  var val = "";
+  if (wifiName.value.length > 10) {
+    val = wifiName.value.subString(0, 10);
+    console.log(val);
+    val += "...";
+  } else {
+    val = wifiName.value;
+  }
+  wifiName.value = "WIFI: " + val;
+  state.value = stateInfo(state.value);
+  rightTextInfo.value = wifiName.value + " " + state.value;
+};
+
+if (model == "Ios") {
+  style.value = "padding-top: 50px;";
+  state.value = "";
+  wifiName.value = "";
+} else {
+  setWifiInfo();
+}
+
+// 点击返回图标
 function onClickLeft() {
   var rou = [
     "/CarInfo",
@@ -89,7 +126,7 @@ const backUi = (type) => {
 };
 
 const onClickRight = () => {
-  if (number == 2) {
+  if (number == 4) {
     // eslint-disable-next-line no-undef
     AN.showLogs("logs");
     number = 0;
@@ -102,7 +139,24 @@ window.backUi = backUi;
 defineComponent({
   name: "component-tab",
 });
+const CONNECTED_STATE = (type, wifi) => {
+  state.value = type;
+  wifiName.value = wifi;
+  setWifiInfo();
+};
+const WIFI_STATE = (type, wifi) => {
+  state.value = type;
+  wifiName.value = wifi;
+  setWifiInfo();
+};
+
+window.CONNECTED_STATE = CONNECTED_STATE;
+window.WIFI_STATE = WIFI_STATE;
 </script>
 
 <style>
+.van-nav-bar__right > .van-nav-bar__text {
+  font-size: 12px;
+  color: green !important;
+}
 </style>

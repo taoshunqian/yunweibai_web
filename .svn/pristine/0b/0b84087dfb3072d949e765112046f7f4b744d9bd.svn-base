@@ -1,0 +1,29 @@
+<!-- eslint-disable vue/multi-word-component-names -->
+<template>
+  <div>2222222222</div>
+</template>
+
+<script setup>
+// import axios from "axios";
+import { defineComponent, onMounted } from "vue";
+import { Api } from '@/api/api.js';
+defineComponent({
+  name: "yunweibao-mock",
+});
+const getData = () => {
+  // axios.get("/api/mockGetList").then((res) => {
+  //   console.log(res.data);
+  // });
+  
+  // axios.post("/api/add", { name: '22' }).then((res) => {
+  //   console.log(res.data);
+  // });
+  Api.GetFileContent({fileUid: "2222"});
+};
+onMounted(() => {
+    getData();
+});
+</script>
+
+<style>
+</style>

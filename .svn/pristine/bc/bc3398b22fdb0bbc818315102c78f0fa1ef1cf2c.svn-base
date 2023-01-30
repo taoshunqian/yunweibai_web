@@ -1,0 +1,107 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    class="cell-group"
+    v-for="(item, index) in CodeStreamInfo"
+    :key="index"
+    @click="getRouter(item)"
+  >
+    <Cell :title="'通道 ' + item[0]" />
+    <Cell>
+      <template #title>
+        <ul>
+          <li>分辨率: <span>{{  columnPower[item[3]] }}</span></li>
+          <li>帧率: <span>{{ item[4] }}</span></li>
+          <li>音频: <span style="color: green">{{ item[2] == "1" ? "启用" : "禁用" }}</span></li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+          <li>编码标准: <span>{{ columnVideo[getVideoEnCode(item[8])] }}</span></li>
+          <li>画质: <span>{{ columnImage[item[7]] }}</span></li>
+          <li>存储大小: <span style="color: green">{{ sessionArr[index] }} GB/h</span></li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+</template>
+
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { Cell, CellGroup,Toast } from "vant";
+import { postAN } from "@/utlis/AdApi";
+import { defineComponent, ref, onMounted } from "vue";
+import {
+ columnPower,columnImage,columnVideo
+} from "@/utlis/ConfigConst";
+import router from "@/router";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const navTitle = ref("顶盖");
+let showType = 0;
+const CodeStreamInfo = ref([]);
+const sessionArr = ref([]);
+
+const getVideoEnCode = (value) => {
+  var code = value.split(":")[0];
+  return code;
+}
+
+const getRouter = (item) => {
+  console.log(showType);
+  router.push({
+    path: "/CodeStreamDetails",
+    query: {
+      channel: item[0],
+      type: showType
+    },
+  });
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  console.warn(cmdArr);
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$IOSIGNALTYPEV3");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

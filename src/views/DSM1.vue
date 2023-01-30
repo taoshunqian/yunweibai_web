@@ -15,8 +15,8 @@
     style="width: 90%; margin-left: 5%; margin-top: 2%"
     size="large"
     @click="calibrationFn(3)"
-    :loading="loading"
-    >HOD 标定</Button
+    :loading="loading" v-show="model != 'Ios'"
+    >HOD</Button
   >
 
   <Button
@@ -24,8 +24,8 @@
     style="width: 90%; margin-left: 5%; margin-top: 2%"
     size="large"
     @click="calibrationFn(4)"
-    :loading="loading"
-    >BSD1 标定</Button
+    :loading="loading" v-show="model != 'Ios'"
+    >BSD1</Button
   >
 
   <Button
@@ -33,8 +33,8 @@
     style="width: 90%; margin-left: 5%; margin-top: 2%"
     size="large"
     @click="calibrationFn(5)"
-    :loading="loading"
-    >BSD2 标定</Button
+    :loading="loading" v-show="model != 'Ios'"
+    >BSD2</Button
   >
 
   <Button
@@ -42,8 +42,8 @@
     style="width: 90%; margin-left: 5%; margin-top: 2%"
     size="large"
     @click="calibrationFn(6)"
-    :loading="loading"
-    >BSD3 标定</Button
+    :loading="loading" v-show="model != 'Ios'"
+    >BSD3</Button
   >
 
   <!-- <Button
@@ -64,11 +64,13 @@ import StickyBottom from "@/components/stickyBottom.vue";
 import { Button, Toast, Dialog } from "vant"; // Checkbox
 import { defineComponent, ref, onMounted } from "vue";
 import { postAN } from "@/utlis/AdApi";
+
 import { getQueryString } from "@/utlis/QueryStr";
 import { useRoute } from "vue-router";
 
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
+const model = sessionStorage.model;
 
 let route = useRoute();
 const guideRouter = route.query.guide;
@@ -100,7 +102,7 @@ const BottomSubmit = () => {
   })
     .then(() => {
       // eslint-disable-next-line no-undef
-      AN.finishWeb();
+      postAN.finishWeb();
     })
     .catch(() => {
       // on cancel

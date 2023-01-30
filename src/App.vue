@@ -1,7 +1,5 @@
 <template>
-  <KeepAlive>
-    
-  </KeepAlive>
+  <KeepAlive> </KeepAlive>
   <router-view></router-view>
 </template>
 
@@ -21,24 +19,34 @@ const { locale } = useI18n();
   4. guide : 向导模式 ： true === 向导模式  false === 普通模式
   5. [多条指令  单条指令]
 */
-const model = false; // 生产 true 测试 false
+const model = true; // 生产 true 测试 false
 const lang = ref(true); //  false === 国内版  true === 国际版
 
 // ---------------------------------
 
 console.log(window.location.href);
+// alert()
 
 try {
   // 生产模式
   if (model) {
     var hash = getQueryString("hash");
     router.push("/" + hash); // 跳转路由
-    locale.value = "zh"; // 设置语言
+
+    locale.value = getQueryString("la"); // 设置语言
     lang.value = locale.value == "zh" ? true : false; // true 当前为国际版  false 为国内版
   } else {
     // 测试模式
+    locale.value = "zh"; // 设置语言
+    lang.value = true;
     var route = getQueryString("hash");
-    router.push("/" + route);
+    if (route == undefined) {
+      router.push("/");
+    } else {
+      router.push("/" + route);
+    }
+
+    // router.push("/AlarmIoInfo"); // 跳转路由
   }
   var modele = getQueryString("model");
   sessionStorage.model = modele;

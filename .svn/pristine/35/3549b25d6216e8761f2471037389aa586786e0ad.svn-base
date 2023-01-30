@@ -1,0 +1,645 @@
+syntax = "proto3";
+
+//2021-08-02 16:00:00
+
+package TLFtpUpload;
+
+
+enum ProtoCmdId{
+   ProtoCmdBase                   = 0;
+   UserLogin                      = 30000; //用户登录协议号
+   PictureUpload                  = 30001; //图片上传
+   SearchPictureUploadResult      = 30002; //查询设置图片上传结果
+   SearchPictureUploadDevices     = 30003; //查询设置图片关联的设备
+   GetUserDevices                 = 30004; //获取设备列表
+   FtpServerInfo                  = 30005; //ftp服务器信息
+   FtpUploadPriority              = 30006; //设置优先级
+   SearchFtpPicture               = 30007; //查询Ftp图片信息
+}
+
+
+
+//用户登录
+message UserLoginRequest{
+   string     userName  =    1;//用户名
+   string     userPwd   =    2;//用户密码
+   string     language  =    3;//语言类型(zh:中文,en:英文,tw:繁体)
+}
+
+message UserLoginResponse{
+      string       sessionId          = 1;//用户登录SessionId
+      uint32       userType           = 2;//UserType:0:主账号 1:子账号
+      uint64       serverTimestamp    = 3;//timestamp:1577444840
+      string       formatTimestamp    = 4;//2017-03-05 00:00:00
+      string       userName           = 5;//用户名称
+      string       companyName        = 6;//公司名称
+}
+
+message GeneralResponse{
+  uint32     errType        = 1; //错误类型
+  uint32     requestCmdId   = 2; //请求ID
+  string     errTime        = 3; //错误时间
+  string     appType        = 4; //App类型
+  string     errDes         = 5; //错误描述
+  uint32     errCode        = 6;//错误码:200表示成功,其他值表示失败
+}
+
+message DataResponse{
+  string      data            = 1;//返回数据
+}
+
+message HttpUserInfo{
+     string                userName             = 1;
+     string                userGuid             = 2;
+     // string                lang                 = 3;
+}
+
+//上传优先级
+enum UploadPriority{
+    PriorityHistory             = 0;//历史优先
+    PriorityCurrentTime         = 1;//实时优先
+}
+
+//操作动作
+enum  OperatorAction{
+     ActionUnknown              =  0; //未知操作类型
+     ActionAdd                  =  1; //添加
+     ActionModify               =  2; //修改
+     ActionDelete               =  3; //删除
+}
+
+enum PictureType{
+    PictureIO                  =    0;//IO抓拍
+    PictureAI                  =    1;//AI报警抓拍
+    PictureOverSpeeding        =    2;//超速报警抓拍
+    PictureFatigueDriving      =    3;//疲劳驾驶
+}
+
+//网络类型
+enum NetworkType{
+    UnknownType                =   0; //未知错误类型
+    WiFiType                   =   1;//WiFi类型
+    Ethernet                   =   2;//以太网类型
+    ThreeFourG                 =   3;//3G/4G
+}
+
+enum SetOperatorState{
+    Success                  =  0;//成功
+    Fail                     =  1;//失败
+    NotReplay                = 999;//设备未回复
+}
+
+//天数时间段
+message DayTimeRange{
+     string     startDay      = 1;//开始日期:eg:2021-07-01,需要支持0000-00-00,表示不限制开始时间
+     string     endDay        = 2;//结束日期:eg:2021-07-02,需要支持0000-00-00,表示不限制结束时间
+}
+
+//小时时间段
+message HourTimeRange{
+    string     startHour       = 1; //开始时间HH:MM:SS eg:00:00:00
+    string     endHour         = 2; //结束时间HH:MM:SS eg:23:59:59
+}
+
+//时间段
+message TimeRange{
+   DayTimeRange      dayTime      = 1;//日期
+   HourTimeRange     hourTime     = 2;//时间
+}
+
+message OnePictureStrategy{
+     string           serverIp                = 1;//Ftp服务器地址
+     uint32           serverPort              = 2;//Ftp服务器端口
+     PictureType      pictureType             = 3;//图片类型
+     UploadPriority   uploadPriority          = 4;//上传优先级
+     repeated  uint32 chnArray                = 5;//录像通道号:eg[1,2]
+     repeated  uint32  ioNumberArray           = 6;//IO通道,IO抓拍类型时使用,IO1,IO2,...IO8
+                                              //从1开始,选择IO1则为1,IO2为2，...
+     TimeRange         pictureTime            = 7;//图片时间
+     HourTimeRange     uploadTime             = 8;//上传时间
+     repeated NetworkType networkTypeArray    = 9;//网络类型,
+     uint32            ftpServerId            = 10;//Ftp服务器Id
+}
+
+//获取图片上传参数
+message GetDevicePictureUploadStrategyRequest{
+    HttpUserInfo    userInfo           = 1;
+    string          deviceId           = 2;//设备ID
+}
+
+//获取在线设备当前图片状态
+message GetOnlineDeviceFtpConfigResponse{
+   string                         deviceId               = 1;
+   repeated   OnePictureStrategy  pictureStrategyArray   = 2;
+}
+
+message DevicePictureUploadStrategy{
+     repeated    OnePictureStrategy  pictureStrategyArray  = 1; //图片类型
+     string          uploadStrategyName                    = 2;//上传策略名称
+}
+
+message GetDevicePictureUploadStrategyResponse{
+   repeated      DevicePictureUploadStrategy  devPictureUploadStrategy = 1;
+}
+
+//设备图片上传参数请求,结果返回值为GeneralResponse
+message SetDevicePictureUploadStrategyRequest{
+    HttpUserInfo          userInfo                        = 1;
+    repeated   OnePictureStrategy  pictureStrategyArray   = 2;
+    repeated   string                 DeviceIdArray       = 3;
+    string          uploadStrategyName                    = 4;//上传策略名称
+    OperatorAction          action                        = 5;//操作类型
+}
+
+//查询设置车辆图片上传记录
+message SearchSetDeviceUploadRecordRequest{
+    HttpUserInfo    userInfo           = 1;
+    string          deviceId           = 2;//设备ID
+    string          startTime          = 3;//设置开始时间
+    string          endTime            = 4;//设置结束时间
+}
+
+message OneSetDeviceUploadRecordInfo{
+     string         setRecordName       = 1;//设置记录名称
+     string         operator            = 2;//操作人
+     string         operatorTime        = 3;//操作时间
+     string         operatorIp          = 4;//操作IP
+     SetDevicePictureUploadStrategyRequest      operatorContent         = 5;//操作内容
+     uint32         totalDevNumber      = 6;//总设备数
+     uint32         successDevNumber    = 7;//设置成功设备数
+     uint32         failDevNumber       = 8;//设置失败设备数
+     uint32         notReturnDevNumber  = 9;//未返回信息设备数
+     uint32         serialNumber        = 10;//消息流水号
+}
+
+
+message SearchSetDeviceUploadRecordResponse{
+     repeated    OneSetDeviceUploadRecordInfo  setDevUploadRecordArray = 1;
+}
+
+//查询某个设置结果对应的设备
+message SearchSetResultDevicesRequest{
+    HttpUserInfo            userInfo                 = 1;
+     string         setRecordName                    = 2;//设置记录名称
+     uint32         serialNumber                     = 3;//消息流水号
+     repeated   SetOperatorState    resultArray      = 4; //查询某一类设置结果对应的设备
+}
+
+message OneDeviceInfo{
+     string              deviceId                  =   1; //设备ID
+     string              deviceName                =   2; //车牌号
+     string              devReturnTime             =   3; //设备返回时间
+     SetOperatorState    setState                  =   4; //设置结果
+}
+
+message SearchSetResultDevicesResponse{
+     repeated      OneDeviceInfo    deviceIdArray      = 1;
+}
+
+//获取通立协议设备列表
+message GetUserDevicesForTL{
+    HttpUserInfo            userInfo                = 1;
+}
+
+message TLMainServerFtpServerInfo{
+   uint32     enableDomain                       = 1; //Enable Domain
+   string     ipAddress                          = 2;
+   uint32     port                               = 3;
+   string     domainName                         = 4;
+   string     userName                           = 5;
+   string     userPassword                       = 6;
+   string     intranetIp                         = 7;
+   uint32     intranetPort                       = 8;
+}
+
+//Ftp服务器相关
+message OneFtpServerInfo{
+    uint32                 serverId                =   1;//服务器ID,已经存在服务器中的数据存在,
+                                                   //添加时不需要填值,修改和删除时需要填值
+    string                 serverIp                =   2;//服务器IP
+    uint32                 serverPort              =   3;//服务器Port
+    string                 userName                =   4;//用户名
+    string                 userPassword            =   5;//密码
+    uint32                 bUploadServer           =   6;//是否启用服务器1:启用,0:禁用
+    string                 ftpServerAlias          =   7;//Ftp服务器名称(最大长度256个字符)
+}
+
+//查询Ftp服务器
+message SearchFtpServerInfoRequest{
+    HttpUserInfo            userInfo                = 1;
+}
+
+message SearchFtpServerInfoResponse{
+    repeated   OneFtpServerInfo    ftpServerArray    = 1;
+}
+
+//添加,删除和修改Ftp服务器
+message FtpServerCurdRequest{
+    HttpUserInfo            userInfo                 = 1;
+    OperatorAction          action                   = 2;//操作类型
+    OneFtpServerInfo        ftpServer                = 3;
+}
+
+//获取上传优先级信息
+message GetUploadBaseConfigRequest{
+    HttpUserInfo            userInfo                = 1;
+}
+
+message GetUploadBaseConfigResponse{
+   uint32               uploadPriorityId            = 1; //上传优先级Id
+   UploadPriority       uploadPriorityState         = 2; //上传优先级状态
+}
+
+//设置上传优先级信息
+message SetUploadBaseConfigRequest{
+    HttpUserInfo            userInfo                = 1;
+    uint32                  uploadPriorityId        = 2; //上传优先级Id
+    UploadPriority          uploadPriorityState     = 3; //上传优先级状态
+}
+
+
+//查询FTP服务器上的图片日历信息
+message  GetUploadFtpPictureDaysRequest{
+     HttpUserInfo                userInfo                     = 1;
+     string                      deviceId                     = 2; //设备ID
+     repeated  uint32            ioNumber                     = 3; //IO通道
+     string                      searchTime                   = 4;//查询的年月信息,格式:YY-MM
+     uint32                      ftpServerId                  = 5;//Ftp服务器ID
+}
+
+message  GetUploadFtpPictureDaysResponse{
+    string                  deviceId               = 1; //设备ID
+    repeated      string    pictureDays            = 2; //有图片的日期,日期格式YY-MM-DD
+}
+
+
+//查询ftp服务器上某一天的图片列表信息
+message GetFtpOneDayPicturesRequest{
+      HttpUserInfo            userInfo               = 1;
+      string                  deviceId               = 2; //设备ID
+      repeated uint32                  ioNumber      = 3; //IO通道
+      string                  searchTime             = 4;//查询某天的图片列表,格式:YY-MM-DD
+      uint32                      ftpServerId        = 5;//Ftp服务器ID
+}
+
+message OneFileInfo{
+     string          fileName                     =   1;//文件名称
+     string          startTime                    =   2;//文件开始时间:格式YY-MM-DD HH:MM:SS
+     string          endTime                      =   3;//文件结束时间:格式YY-MM-DD HH:MM:SS
+                                                  //图片开始时间和结束时间相等,录像开始时间和结束时间不一样
+     uint32          IONumber                     =   4;//文件所属的IO通道
+     uint32          AVChannel                    =   5;//文件所属的通道
+     uint32          fileSize                     =   6;//文件大小
+     string          filePath                     =   7;//文件所在文件夹,(下载时使用)
+     string          fileContent                  =   8;//如果是图片,则为base64的数据格式
+     string          IOTime                       =   9;//IO触发时间
+     uint32          IOEventType                  =   10;//IO事件类型
+     uint32          PictureNo                    =   11;//图片编号,即抓拍的第几张图片
+}
+
+message GetFtpOneDayPicturesResponse{
+     repeated   OneFileInfo     picturesArray   = 1;//图片列表
+}
+
+
+//查询某个时间段的图片内容
+message GetPictureContentsByTimeStampRequest{
+     HttpUserInfo            userInfo               = 1;
+     string                  deviceId               = 2; //设备ID
+     repeated uint32         ioNumber               = 3; //IO通道
+     string                  startTime              = 4; //开始时间,格式YY-MM-DD HH:MM:SS
+     string                  endTime                = 5; //结束时间,格式YY-MM-DD HH:MM:SS
+     uint32                  ftpServerId            = 6;//Ftp服务器ID
+}
+
+message OneChannelPictureContents{
+     uint32                     avChannel             = 1;//视频通道号
+     repeated   OneFileInfo     picturesArray        = 2;//图片列表信息
+}
+
+message GetPictureContentsByTimeStampResponse{
+    repeated   OneChannelPictureContents     picturesArray   = 1;//图片列表信息
+}
+
+//查询单个设备某个时间段的图片信息(可以跨天)
+message SearchTimeRangePictureListRequest{
+       HttpUserInfo            userInfo               = 1;
+       string                  deviceId               = 2; //设备ID(不可以为空)
+       repeated  uint32        ioNumberArray          = 3; //IO通道
+       string                  operator               = 4; //设备ID
+       string                  startTime              = 5; //开始时间,格式YY-MM-DD HH:MM:SS
+       string                  endTime                = 6; //结束时间,格式YY-MM-DD HH:MM:SS
+       uint32                  ftpServerId            = 7;//Ftp服务器ID
+}
+
+message SearchTimeRangePictureListResponse{
+      repeated   OneFileInfo     picturesArray        = 1;//图片列表信息
+}
+
+
+//设备信息
+message TLDeviceInfo{
+     string              DeviceId     = 1;//设备ID
+	 string              DeviceName   = 2;//设备名称
+	 string              DeviceParent = 3;//设备父节点
+	 uint32              DeviceChnNum = 4;//通道数量
+}
+
+
+//按条件搜索设备信息
+message SearchDeviceInfoRequest{
+       HttpUserInfo            userInfo               = 1;
+       string                  deviceId               = 2;//模糊匹配设备ID
+       string                  deviceName             = 3;//模糊匹配车牌号
+}
+
+message SearchDeviceInfoResponse{
+       repeated    TLDeviceInfo   deviceInfoArray      = 1;
+}
+
+//同时模糊匹配设备ID和车牌号
+message SearchTreeNodeDeviceInfoRequest{
+       HttpUserInfo            userInfo                  = 1;
+       string                  searchValue               = 2;//模糊匹配设备ID和车牌号
+}
+
+//需要下载的文件的参数
+message DownloadFileParam{
+      string          fileName                     =   1;//文件名称
+      string          filePath                     =   2;//文件所在文件夹
+}
+
+//批量下载服务器端的图片
+message DownloadMultiFtpServerPictureRequest{
+    HttpUserInfo            userInfo                      = 1;
+    repeated  DownloadFileParam        downloadFileArray  = 2;
+    uint32                  ftpServerId                   = 3;//Ftp服务器ID
+}
+
+message DownloadMultiFtpServerPictureResponse{
+     string                   dirPath                      =  1;//下载文件的路径
+     string                   fileName                     =  2;//下载文件的名字
+}
+
+
+message TLMessageTransferRequest{
+     string                   messageContent                  = 1;//消息内容
+     uint32                   messageCnt                      = 2;//消息个数
+     string                   deviceId                        = 3;//设备ID
+}
+
+message TLMessageTransferResponse{
+     uint32                  errCode                          = 1;//错误码
+     string                  responseContent                  = 2;//返回内容
+     uint32                  responseCnt                      = 3;//内容数据个数
+}
+
+enum SearchType{
+    SearchTypeUnknown              =    0;//类型未知
+    SearchTypeRecordFile           =    1;//录像文件
+    SearchTypePictureFile          =    2;//图片文件
+    SearchTypeUpgradeFile          =    3;//升级文件
+}
+
+
+//请求已经上传到ftp服务器上的设备ID信息
+message TLMessageGetFtpServerDevicesRequest{
+     HttpUserInfo                userInfo                      = 1; //用户信息
+     uint32                      serverId                      = 2; //从服务器列表中获取到的服务器ID值
+     SearchType                  searchFileType                = 3; //搜索文件类型
+}
+
+message UploadDeviceInfo{
+     string                      deviceId                       = 1; //设备ID
+     string                      deviceName                     = 2; //设备名称
+     repeated        string      fileDays                       = 3; //录像文件天数
+}
+
+
+message TLMessageGetFtpServerDevicesResponse{
+     repeated       UploadDeviceInfo    devicesArray            = 1;//设备信息
+      SearchType                  searchFileType                = 2; //搜索文件类型
+}
+
+//获取用户ftp上的存储的录像文件及大小信息,serverId或者ftpServerInfo只生效一项,serverId优先
+message TLMessageGetUserFtpServerStorageInfoRequest{
+     HttpUserInfo                userInfo                      = 1; //用户信息
+     uint32                      serverId                      = 2; //从服务器列表中获取到的服务器ID值
+     OneFtpServerInfo            ftpServerInfo                 = 3;//手动填写的ftp服务器的IP,端口,用户名,密码
+}
+
+message TLMessageFtpServerFileInfo{
+     string                        fileName                     =  1;//文件名
+     uint64                        fileSize                     =  2;//文件大小
+     string                        createTime                   =  3;//创建时间
+     string                        filePath                     =  4;//文件路径
+     uint32                        fileType                     =  5;//文件类型 0:文件,1:文件夹 2.自定义的文件夹名称(ftp录像文件夹，
+                                                                  //ftp图片上传文件夹， 升级文件夹等)
+}
+
+//查看文件夹对应的文件信息
+message TLMessageGetFtpDirectoryFilesInfoRequest{
+     HttpUserInfo                userInfo                      = 1; //用户信息
+     uint32                      serverId                      = 2; //从服务器列表中获取到的服务器ID值
+     string                      fileName                      = 3;//文件名
+     string                      filePath                      =  5;//文件路径
+     uint32                      searchFileType                = 6;//文件类型 0:文件,1:文件夹 2.自定义的文件夹名称(ftp录像文件夹，
+                                                                   //ftp图片上传文件夹， 升级文件夹等)
+}
+
+
+message TLMessageFilesInfoResponse{
+     repeated       TLMessageFtpServerFileInfo   filesArray      =  1;//文件数组
+     uint64                                      totalSize       =  2;//文件夹大小
+}
+
+//删除某个FTP服务器的文件夹中的文件,返回结果为通用应答
+message TLMessageDeleteFtpDirectoryFilesInfoRequest{
+     HttpUserInfo                                userInfo        =  1; //用户信息
+     uint32                                      serverId        =  2; //从服务器列表中获取到的服务器ID值
+     repeated       TLMessageFtpServerFileInfo   filesArray      =  3; //要删除的文件信息
+}
+
+
+message SetDeleteFtpFileConfig{
+     uint32                        enableAutoDeleteFile            = 1; //0:关闭,1:开启 自动删除文件
+     uint32                        deleteDayBefore                 = 2; //默认删除多少天之前的数据
+}
+
+//设置删除Ftp服务器文件的配置,返回结果为通用应答
+message TLMessageSetDeleteFtpFileConfigRequest{
+    HttpUserInfo                                userInfo            =  1; //用户信息
+    SetDeleteFtpFileConfig                      setDelFtpConfig     =  2; //删除ftp服务器文件的策略配置
+}
+
+message TlcsGetDeviceWithChnTestResponse{
+     uint64    id                                  = 1;   //TreeNode Id
+     string    text                                = 2;   //TreeNode Text
+     string    state                               = 3;  //TreeNode State,Close Or Open
+     string    iconSkin                            = 4;  //TreeNode Icon
+     uint32    groupType                           = 5;  //DeviceListGroupType
+     string    deviceName                          = 6;
+     string    deviceId                            = 7;
+     uint32    deviceMaxChn                        = 8;
+     uint32    devType                             = 9;   // 0:JT Device,1:TLPro Device
+     uint32    devState                            = 10;  // DeviceOnOfflineState
+     uint32    chnNum                              = 11;
+     string    name                                = 12;
+     uint32    pId                                 = 13;
+     string  attachDevId                           = 14;//attach user added deviceid
+  }
+  message DevicesAndGroupsMessage{
+     repeated TlcsGetDeviceWithChnTestResponse children = 1;
+  }
+
+  enum DownloadMediaType {
+     DownloadMediaTypeAVData     =  0; //音视频数据流
+     DownloadMediaTypeAudio      =  1; //音频
+     DownloadMediaTypeVideo      =  2; //视频
+     DownloadMediaTypeKeyFrame   =  3; //关键信息帧
+     DownloadMediaTypeAVGData    =  4; //所有帧(音频+视频+gps)
+     DownloadMediaTypePicture    =  5; //图片
+     DownloadMediaTypeGps        =  6; //GPS数据
+     DownloadMediaTypeRawData    =  7; //原始Data
+     DownloadMediaTypeOther      =  8; //其他
+ }
+ enum MediaFileSearchType {
+     SearchDevice = 0;//SearchDevice
+     DownloadServer = 1;//Download Server:all avi or mp4 file
+     StoreServer = 2;//Store Server:All ifv or rpo file
+ }
+  message GetMediaFilelistRequest {
+     string   deviceId = 1;
+     repeated uint32 logicalChannel = 2;
+     repeated uint32 startTime = 3;
+     repeated uint32 endTime = 4;
+     repeated uint32 alarmType = 5;
+     uint32   avType = 6;//0:video and audio,1:audio,2:video,3:video/audio and video
+     uint32   streamType = 7;//0:Master or Slave Stream,1:Master Stream,2:Slave Stream
+     uint32   storeType = 8;//0:Main Or Backup Storage,1:Main Storage,2:Backup Storage
+     MediaFileSearchType   searchFileType = 9;//
+     HttpUserInfo                httpUser = 10;
+     uint32       ftpServerId          = 11;
+ }
+
+ message MediaFileInfo {
+     uint32 logicalChannel = 1;
+     repeated uint32 startTime = 2;
+     repeated uint32 endTime = 3;
+     repeated uint32 alarmType = 4;
+     uint32   avType = 5;//0:video and audio,1:audio,2:video,3:video/audio and video
+     uint32   streamType = 6;//0:Master or Slave Stream,1:Master Stream,2:Slave Stream
+     uint32   storeType = 7;//0:Main Or Backup Storage,1:Main Storage,2:Backup Storage
+     uint32   fileSize = 8;
+     string   filePath = 9;//It is effective when MediaFileSearchType is not device
+     string   fileName = 10;//It is effective when MediaFileSearchType is not device
+     uint32   ftpServerId  = 11;////It is effective when MediaFileSearchType is not device
+ }
+ message GetMediaFilelistResponse {
+     uint64   devIdNum = 1;
+     string   deviceId = 2;
+     uint32   totalFileCount = 3;
+     repeated MediaFileInfo  mediaFileLists = 4;
+     uint32   totalPacketNum = 5;
+ }
+
+
+ //下载文件格式
+ enum DownloadMediaFileType{
+      DownloadMediaFileTypeMp4     =  0; //视频,音视频,关键帧,所有帧 搜索时可以选择
+      DownloadMediaFileTypeAvi     =  1; //视频,音视频,关键帧,所有帧 搜索时可以选择
+      DownloadMediaFileTypeWav     =  2; //音频搜索时可以选择
+      DownloadMediaFileTypeMp3     =  3; //音频搜索时可以选择
+      DownloadMediaFileTypeGps     =  4; //GPS搜索时可以选择
+      DownloadMediaFileTypeJpg     =  5; //图片搜索时可以选择
+      DownloadMediaFileTypePng     =  6; //图片搜索时可以选择
+      DownloadMediaFileTypeRaw     =  7;//原始Data搜索时可以选择
+ }
+ message DownloadMediaInfoRequest{
+      HttpUserInfo               httpUser    = 1; //用户信息
+      string                     startTime   = 2; //开始时间
+      string                     endTime     = 3; //结束时间
+      DownloadMediaType          downloadType  = 4;//下载媒体类型
+      uint32                     channel      = 5;//通道
+      uint32                     streamType   = 6;//码流类型0:主码流或者自码流 2.子码流 如果次通道只传
+                                                   //音频，此字段置0
+      uint32                     storeType   = 7;//存储器类型0:主存储器或灾备存储器
+                                                   // 1,主存储器 2.灾备存储器
+      DownloadMediaFileType      downloadFileFormat = 8;//下载文件的格式
+      string                     deviceId     = 9;//设备ID
+ }
+
+ message DownloadMediaInfoResponse{
+     string                      fileName        = 1; //要下载的文件名
+     string                      filePath        = 2; //要下载的文件路径
+     uint32                      uniqueSerial    = 3; //要下载的文件编号
+     string                      deviceId        = 4; //设备ID
+}
+
+message TLDownloadMediaInfoProgressRequest{
+     HttpUserInfo                httpUser        = 1; //用户信息
+     string                      deviceId        = 2; //设备ID
+     string                      fileName        = 3; //要下载的文件名
+     string                      filePath        = 4; //要下载的文件路径
+     uint32                      uniqueSerial    = 5; //要下载的文件标识
+}
+
+message TLDownloadMediaInfoProgressResponse{
+     string                      deviceId        = 1; //设备ID
+     string                      fileName        = 2; //要下载的文件名
+     uint32                      progress        = 3; //进度条(1,2,...100)
+     uint32                      bStop           = 4; //是否结束(譬如网络断开,主动结束下载等,0:表示正在下载,1已停止)
+     uint64                      recvTotalLen    = 5; //接收到的数据总数
+}
+
+message StopDownloadMediaInfoRequest{
+     HttpUserInfo               httpUser      = 1; //用户信息
+     uint32                     channel       = 2;//通道
+     string                     deviceId      = 3;//设备ID
+}
+
+message CurdResponse {
+    uint32 errType = 1;
+    uint32 requestCmdId = 2;
+    string errTime = 3;
+    string appType = 4;
+    string errDes = 5;
+    uint32 errCode = 6; //200表示成功
+}
+
+message FtpManageServerInfo{
+     uint32                      enableDomain     = 1;//启用域名 0:不启用 1:启用
+     string                      domainServer     = 2;//域名
+     string                      serverIp         = 3;//服务器IP
+     uint32                      serverPort       = 4;//服务器端口
+}
+message GetDeviceFtpManageResponse{
+       FtpManageServerInfo         serverInfo        = 1; //Ftp管理服务器信息
+}
+
+enum GeneralACKResultType{
+    Success        = 0;
+    Fail           = 1;
+    MessageError   = 2;
+    NotSupport     = 3;
+    AlarmConfig    = 4;
+    TimeOutError   = 20;
+    NoAuthority    = 30;
+    NotOnline      = 999;
+}
+
+//设置Ftp管理服务器信息
+message SetDeviceFtpManageRequest{
+      HttpUserInfo                httpUser        = 1; //用户信息
+      repeated     string         deviceId        = 2; //设备ID
+      FtpManageServerInfo         serverInfo      = 3; //Ftp管理服务器信息
+}
+message SetGeneralResponse {
+    uint32                 setResult = 1;
+    GeneralACKResultType   resultType = 2;
+}
+
+message GetOnlineDeviceInfoRequest{
+      HttpUserInfo                httpUser        = 1; //用户信息
+      string                      deviceId        = 2; //设备ID
+}

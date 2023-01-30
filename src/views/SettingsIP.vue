@@ -134,15 +134,17 @@
     closeable
     close-icon="close"
     position="bottom"
-    :style="{ height: '50%' }"
+    :style="{ height: '70%' }"
   >
-    <div style="margin-top: 50px">
+    <div style="margin-top: 50px;" class="ContactList">
       <ContactList
         v-model="chosenContactId"
         :list="list"
         :add-text="$t('settingsIP.title[9]')"
         @add="onAdd"
         @select="onSelect"
+        style=""
+        class="ContactList"
       />
     </div>
   </Popup>
@@ -201,17 +203,18 @@ const onAdd = () => (wifiNameShow.value = false);
 
 const fieldBlur = () => {
   var filter = /[\u4E00-\u9FA5\uF900-\uFA2D]{1,}/;
-  if(filter.test(nowShowCmd.value[2])) {
+  if (filter.test(nowShowCmd.value[2])) {
     errorMsg.value = t("settingsIP.errorMsg");
     isWifiName.value = false;
   } else {
     errorMsg.value = "";
     isWifiName.value = true;
+    return false;
   }
   setTimeout(() => {
     nowShowCmd.value[2] = "";
-  },1000)
-}
+  }, 1000);
+};
 
 const onSelect = (contact) => {
   var name = contact.name.split(": ")[1];
@@ -228,7 +231,7 @@ const BottomSearch = () => {
 // 保存
 const BottomSubmit = () => {
   var addCmds = allCmd.value;
-  if(!isWifiName.value) {
+  if (!isWifiName.value) {
     return false;
   }
   // console.log(addCmds);
@@ -239,7 +242,7 @@ const BottomSubmit = () => {
   nowCmd[3] = getWifiASCFormat(nowCmd[3]);
   nowCmd[4] = checked2.value;
   nowCmd[8] = checked3.value;
-  
+
   var activeCmd = nowCmd.toString().replace(/,/g, "#");
   addCmds[useCmdIndex.value] = activeCmd;
   var cmds = "$WIFI," + addCmds.toString();
@@ -269,10 +272,11 @@ defineComponent({
 const callJSResult = (str) => {
   var item = query.item;
   var cmds = str.split(";")[0];
+  console.log("wifi列表" + str);
   if (str.indexOf("WIFISEARCH") !== -1) {
     var cmdArr2 = cmds.split(",").splice(1);
     var items = [];
-    // console.log(cmdArr2);
+    console.log("wifi列表" + cmdArr2);
     for (var i = 0; i < cmdArr2.length; i++) {
       // eslint-disable-next-line no-redeclare
       var item = cmdArr2[i].split("#");
@@ -283,6 +287,7 @@ const callJSResult = (str) => {
         tel: t("settingsIP.itemList[1]") + (item[1] == 1 ? "YES" : "NO"),
       });
     }
+    console.log(items);
     list.value = items;
     return false;
   }
@@ -348,4 +353,10 @@ onMounted(() => {
 </script>
 
 <style>
+.ContactList {
+  overflow-y: scroll;
+  height: 500px;
+  margin-bottom: 50px;
+  padding-bottom: 150px;
+}
 </style>

@@ -7,6 +7,7 @@
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "proto": "pbjs -t json src/proto/*.proto > src/proto/proto.json",
+    "proto3": "pbjs -t json src/proto/TLFtpUpload.proto > src/proto/TLFtpUpload.json",
     "proto2": "pbjs -t json-module -w commonjs -o src/proto/proto.js src/proto/*.proto"
   },
   "dependencies": {
@@ -29,8 +30,6 @@
     "less": "^4.1.3",
     "less-loader": "^11.0.0",
     "mockjs": "^1.1.0",
-    "node-sass": "^7.0.3",
-    "sass-loader": "^13.0.2",
     "uglifyjs-webpack-plugin": "^2.2.0",
     "vant": "^3.6.2",
     "vue-i18n": "^9.2.2",

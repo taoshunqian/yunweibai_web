@@ -184,7 +184,8 @@ const callJSResult = (str) => {
   if(str.indexOf("DISKSTATUS") !== -1) {
     var cmdsStatus = str.split(";")[0];
     var diskS = cmdsStatus.split(",");
-    diskStatus.value = diskS.splice(1)
+    diskStatus.value = diskS.splice(1);
+    
     return false
   }
   if (str.indexOf("FORMATSTATUS") !== -1) {
@@ -203,6 +204,7 @@ const callJSResult = (str) => {
         loadingType: "spinner",
         duration: 0,
       });
+      postAN.ANSend("$DISKSTATUS");
     }
 
     return false;
@@ -234,7 +236,7 @@ const callJSResult_Status = (str) => {
 const androidStatus_fn = () => {
   var param = getQueryString("param").split("@"); // 解析出指令
   postAN.ANSend(param[1]);
-  postAN.ANSend("$DISKSTATUS");
+  
 };
 
 onMounted(() => {

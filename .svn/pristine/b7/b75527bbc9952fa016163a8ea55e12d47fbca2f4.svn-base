@@ -1,0 +1,252 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <CellGroup inset class="cell-group">
+    <Cell title="启用">
+      <template #right-icon>
+        <Checkbox v-model="useCmdInfo[1]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+  <CellGroup inset class="cell-group">
+    <Field
+      label="传感器名称"
+      v-model="useCmdInfo[2]"
+      placeholder="请输入名称"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <CellGroup inset class="cell-group"
+    ><Field
+      label="最低胎压"
+      label-width="150"
+      placeholder="请输入胎压"
+      input-align="right"
+      v-model="useCmdInfo[3]"
+    >
+      <template #button> Kpa </template></Field
+    >
+  </CellGroup>
+
+  <CellGroup inset class="cell-group"
+    ><Field
+      label="最高胎压"
+      label-width="150"
+      placeholder="请输入胎压"
+      input-align="right"
+      v-model="useCmdInfo[4]"
+    >
+      <template #button> Kpa </template></Field
+    >
+  </CellGroup>
+
+  <CellGroup inset class="cell-group"
+    ><Field
+      label="最低胎温"
+      label-width="150"
+      placeholder="请输入胎温"
+      input-align="right"
+      v-model="useCmdInfo[5]"
+    >
+      <template #button> °C</template></Field
+    >
+  </CellGroup>
+
+  <CellGroup inset class="cell-group"
+    ><Field
+      label="最高胎温"
+      label-width="150"
+      placeholder="请输入胎温"
+      input-align="right"
+      v-model="useCmdInfo[6]"
+    >
+      <template #button> °C</template></Field
+    >
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="预览叠加">
+      <template #right-icon>
+        <Checkbox v-model="useCmdInfo[7]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="蜂鸣器">
+      <template #right-icon>
+        <Checkbox v-model="useCmdInfo[8]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <CellGroup inset class="cell-group">
+    <Cell title="报警输出">
+      <template #right-icon>
+        <div>
+          <CheckboxGroup
+            v-model="columsChecked"
+            direction="horizontal"
+            style="width: 200px"
+          >
+            <Checkbox
+              :name="item"
+              shape="square"
+              v-for="(item, index) in 8"
+              :key="index"
+              style="margin-bottom: 8px"
+              >{{ item }}</Checkbox
+            >
+          </CheckboxGroup>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+
+import { CellGroup, Toast, Field, CheckboxGroup, Checkbox, Cell } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+let route = useRoute();
+
+import { postAN } from "@/utlis/AdApi";
+
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const index = route.query.index;
+const navTitle = ref("传感器序号 " + index);
+
+const allCmdInfo = ref([]);
+const useCmdInfo = ref([]);
+const columsChecked = ref([]);
+
+const BottomSubmit = () => {
+  var alarmCheck = [...columsChecked.value];
+  var useCmd = [...useCmdInfo.value];
+  var alarmInfo = [];
+  for(var i=1;i<=8;i++) {
+    if(alarmCheck.includes(i)) {
+      alarmInfo.push(1)
+    } else {
+      alarmInfo.push(0);
+    }
+    // console.log(i);
+  }
+  alarmInfo = alarmInfo.reverse().join("");
+  var alarmOutpt =  parseInt(alarmInfo, 2);
+  useCmd[9] = alarmOutpt;
+  var filterArr = [1,7,8];
+  var cmds = [];
+  for(var j=0;j<useCmd.length;j++) {
+    if(filterArr.includes(j)) {
+      cmds.push(+useCmd[j])
+    } else {
+      cmds.push(useCmd[j])
+    }
+  }
+  allCmdInfo.value[index - 1] = cmds;
+  var cmdInfo = [...allCmdInfo.value];
+  var cmd = [];
+  for(var k=0;k<cmdInfo.length;k++) {
+    var it = cmdInfo[k].join("*");
+    cmd.push(it);
+  }
+  var cmdInfos = "$TPMSPARAMV3," + cmd.toString();
+  postAN.ANsendSetting(cmdInfos);
+};
+const BottomSearch = () => {
+  androidStatus_fn();
+};
+
+const filtesCheack = (num) => {
+  return !!+num;
+};
+
+const baseChange = (value) => {
+  var leng = value.length;
+  var number = 8 - leng;
+  var str = "";
+  for (var i = 0; i < number; i++) {
+    str += "0";
+  }
+  str += value;
+  var select = str.split("");
+  return select;
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-TyrepressureDerails",
+});
+
+// 安卓回调函数r
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  var allArr = [];
+  cmdArr.forEach((item) => {
+    var it = item.split("*");
+    if (it[0] == index) {
+      
+      useCmdInfo.value = it;
+    }
+    allArr.push(it);
+  });
+  useCmdInfo.value[1] = filtesCheack(useCmdInfo.value[1]);
+  useCmdInfo.value[7] = filtesCheack(useCmdInfo.value[7]);
+  useCmdInfo.value[8] = filtesCheack(useCmdInfo.value[8]);
+
+  let output = Number(useCmdInfo.value[9]).toString(2);
+
+  let activeIndex = baseChange(output).reverse();
+  
+  var selectArr = [];
+  for (var i = 0; i < activeIndex.length; i++) {
+    if (activeIndex[i] == 1) {
+      selectArr.push(i + 1);
+    }
+  }
+  columsChecked.value = selectArr;
+  allArr.shift();
+  allCmdInfo.value = allArr;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$TPMSPARAMV3");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin-top: 10px;
+}
+</style>

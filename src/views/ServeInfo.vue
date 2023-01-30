@@ -161,21 +161,22 @@ const isPcName = ref(true);
 
 const fieldBlur = () => {
   var filter = /[\u4E00-\u9FA5\uF900-\uFA2D]{1,}/;
-  if(filter.test(ServeInfo.value[1])) {
+  if (filter.test(ServeInfo.value[1])) {
     errorMsg.value = t("serveInfo.errorMsg");
     isPcName.value = false;
   } else {
     errorMsg.value = "";
     isPcName.value = true;
+    return false;
   }
   setTimeout(() => {
     ServeInfo.value[1] = "";
-  },1000)
-}
+  }, 1000);
+};
 
 // 保存
 const BottomSubmit = () => {
-  if(!isPcName.value) {
+  if (!isPcName.value) {
     return false;
   }
   var cmds = [...ServeInfo.value];
@@ -187,19 +188,14 @@ const BottomSubmit = () => {
     number++;
   }
   const resCmds = cmds.toString();
-  console.log(resCmds)
+  console.log(resCmds);
   postAN.ANsendSetting(resCmds);
   return false;
 };
 // 查询
 const BottomSearch = () => {
   Toast(t("toast[0]"));
-  let nowCmd = ServeInfo.value[0];
-
-  postAN.ANSend(nowCmd);
-  // console.warn(nowCmd)
-
-  postAN.ANSend("$NETSTATE");
+  androidStatus_fn();
 };
 
 // 显示选择器
@@ -245,7 +241,6 @@ defineComponent({
 });
 
 function filterDeviceState(name) {
-
   var device = t("platformSettings.deviceState[0]").split(",");
   return device[name];
 }
@@ -263,8 +258,11 @@ function setData() {
 const callJSResult = (str) => {
   var cmds = str.split(";")[0];
   sendNum.value++;
+  if (sendNum.value == 1) {
+    postAN.ANSend("$NETSTATE");
+  }
   if (sendNum.value == 2) {
-    console.warn(resultAll.value)
+    console.warn(resultAll.value);
     var items = resultAll.value.split("!");
     var net = cmds.split(",");
     var jtsvrState = [];
@@ -278,7 +276,7 @@ const callJSResult = (str) => {
     ServeInfo.value = cmdArr;
     setData();
     sendNum.value = 0;
-    resultAll.value = ""
+    resultAll.value = "";
     return false;
   }
   resultAll.value += cmds + "!";
@@ -296,9 +294,7 @@ const callJSResult_Status = (str) => {
 const androidStatus_fn = () => {
   let nowCmd = ServeInfo.value[0];
   postAN.ANSend(nowCmd);
-  setTimeout(() => {
-    postAN.ANSend("$NETSTATE");
-  },1000)
+  setTimeout(() => {}, 1000);
 };
 androidStatus_fn();
 onMounted(() => {

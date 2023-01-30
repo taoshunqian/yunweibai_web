@@ -1,0 +1,240 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="lavelMuch" />
+
+  <AlarmConfig
+    model="2"
+    :status="status"
+    :data="comInfo"
+    :columnShowItem="columnShowItem"
+    @comConfirm="comConfirm"
+    v-if="!errorShow"
+  />
+
+  <Empty image="error" :description="failMsg" v-else />
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" v-if="!errorShow" />
+</template>
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+import StickyBottom from "@/components/stickyBottom.vue";
+import AlarmConfig from "@/components/AlarmConfig.vue";
+import { Toast, Empty } from "vant";
+import { defineComponent, ref, onMounted, onBeforeUnmount } from "vue";
+import { postAN } from "@/utlis/AdApi";
+import { useI18n } from "vue-i18n";
+import { columnComInfo, filterABtn, getQueryString } from "@/utlis/QueryStr";
+const { t } = useI18n();
+import { useRoute } from "vue-router";
+let route = useRoute();
+const index = route.query.index;
+
+const columnIndex = columnComInfo();
+
+const columnShowItem = ref([]);
+const comInfo = ref([]);
+const navTitle = ref(t('ComInfo.navTitle'));
+const allCmdList = ref([]); // 解析的完整指令
+const status = ref(true); // 状态更新
+const isSend = ref(false); // 是否允许设置参数
+const lavelMuch = ref(true);
+const type = ref(0);
+const failMsg = ref(t("ComInfo.failMsg"));
+const errorShow = ref(false);
+const alarmIndexInfo = ref(-1);
+const cardIndexInfo = ref(-1);
+
+const BottomSearch = () => {
+  androidStatus_fn();
+  isSend.value = false;
+};
+
+const BottomSubmit = () => {
+  status.value = !status.value;
+  isSend.value = true;
+};
+
+const comConfirm = (value) => {
+  // var arrItem = value;
+  var ix = 0;
+  if (type.value == 1) {
+    ix = alarmIndexInfo.value - 1;
+  } else if (type.value == 2) {
+    ix = cardIndexInfo.value - 1;
+  } else {
+    ix = index - 1;
+  }
+  if (isSend.value) {
+    allCmdList.value[ix] = ix + 1 + "," + value.toString();
+    var cmdList = [...allCmdList.value];
+    cmdList.forEach((item) => {
+      var send = "$UARTSET," + item;
+      console.warn(send)
+      postAN.ANsendSetting(send);
+      // console.log(send);
+    });
+  }
+  // var items = [];
+  // for(var i=0;i<arrItem.length;i++) {
+  //   items.push(arrItem[i].value);
+  // }
+  // console.log(items);
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-ComInfo",
+});
+
+const alarmShowIndex = (arr, arr2) => {
+  var index = false;
+  for (var i = 0; i < arr.length; i++) {
+    if (arr2.includes(arr[i])) {
+      console.log(arr2 + "-------" + arr[i]);
+      index = true;
+      return index;
+    }
+  }
+  return index;
+};
+
+const modelDevicesInfo = (
+  itemShowIndexArr,
+  showArr,
+  basciALlArr,
+  allArr,
+  index
+) => {
+  columnShowItem.value = showArr;
+  // alert(index)
+  var itemIndex = itemShowIndexArr[index - 1];
+  // navTitle.value = navTitle.value + index;
+  itemIndex.forEach((item) => {
+    showArr.push(columnIndex[item]);
+  });
+  allCmdList.value = basciALlArr;
+  var data = allArr[index - 1];
+  data.shift();
+  data[4] = filterABtn(data[4]);
+  comInfo.value = data;
+};
+
+// -------------------------------------------------------------------
+
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  var allArr = [];
+  var itemShowIndexArr = [];
+  var showArr = [];
+  var basciALlArr = [];
+  var alarmShow = ["53", "48", "49"]; // 声光报警序号
+  var cardShow = ["50", "9"]; // 刷卡器
+
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("~");
+    var item2 = cmdArr[i].split("~");
+    var itIndex = [...item[1].split("*")];
+    var alarmIndex = alarmShowIndex(itIndex, alarmShow);
+    var cardIndex = alarmShowIndex(itIndex, cardShow);
+    if (cardIndex) {
+      cardIndexInfo.value = i;
+    }
+    if (alarmIndex) {
+      alarmIndexInfo.value = i;
+    }
+    item2[1] = itIndex[0];
+    var activeIndex = itIndex[0];
+    itemShowIndexArr.push(itIndex.slice(1));
+    item[1] = columnIndex[activeIndex];
+    basciALlArr.push(item2);
+    allArr.push(item);
+  }
+
+  if (type.value == 1) {
+     navTitle.value = t("ComInfo.callJSResult[0]");
+    if (alarmIndexInfo.value == -1) {
+      Toast.fail(t("ComInfo.callJSResult[1]"));
+      failMsg.value = t('ComInfo.callJSResult[2]');
+      errorShow.value = true;
+     
+      return false;
+    }
+    modelDevicesInfo(
+      itemShowIndexArr,
+      showArr,
+      basciALlArr,
+      allArr,
+      alarmIndexInfo.value
+    );
+    
+  } else if (type.value == 2) {
+    navTitle.value = t("ComInfo.callJSResult[3]");
+    if (cardIndexInfo.value == -1) {
+      Toast.fail(t("ComInfo.callJSResult[4]"));
+      failMsg.value =t("ComInfo.callJSResult[5]");
+      errorShow.value = true;
+      
+      return false;
+    }
+    modelDevicesInfo(
+      itemShowIndexArr,
+      showArr,
+      basciALlArr,
+      allArr,
+      cardIndexInfo.value
+    );
+    
+  } else {
+    navTitle.value = navTitle.value + index;
+    modelDevicesInfo(itemShowIndexArr, showArr, basciALlArr, allArr, index);
+  }
+};
+
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令 // .split("@")
+  type.value = param[param.length - 1]; //  1: 声光报警 2.刷卡器   !1 || !2 其它
+  // type.value = 1; //  1: 声光报警 2.刷卡器
+  if(type.value == 1 || type.value == 2) {
+    lavelMuch.value = false;
+  } else {
+    lavelMuch.value = true;
+  }
+  postAN.ANSend("$UARTSET");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+
+onBeforeUnmount(() => {
+  console.log("离开当前路由-------------");
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin-top: 10px;
+}
+</style>

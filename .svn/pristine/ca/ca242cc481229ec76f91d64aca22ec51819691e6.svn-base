@@ -1,0 +1,151 @@
+export default {
+    en: {
+
+    },
+    zh: {
+        "AlarmConfig": {
+            "title": "IO序号 ",
+            "columns": "近光,远光,右转,左转,倒车,制动,雾灯,示廊灯,喇叭,空调状态,空挡信号,缓速器工作,ABS 工作,加热器工作,离合状态,前门,中门,后门,驾驶席门,自定义门,载重,保留位1,保留位2,顶盖传感器信号,举升传感器信号",
+            "navTitle": "顶盖",
+            "filtersCOlumnsTitle": "未配置功能",
+        },
+        "AlarmOutput": {
+            "content": [
+                "输出", "远程", "手动", "联动", "测试"
+            ],
+            "navTitle": "IO 输出"
+        },
+        "CodeStream": {
+            "template": [
+                '总计存储大小', '通道 ', '分辨率', '帧率', '音频', '编码标准',
+                '画质', '存储大小'
+            ],
+            "audioType": ['启用', '禁用'],
+            "navTitle": "主/子码流",
+            "androidStatus_fn": ['主码流', '子码流']
+        },
+        "CodeStreamDetails": {
+            "template": [
+                '音频叠加', '分辨率', '帧率', '位率类型', '位率', '画质',
+                '编码标准', '存储大小'
+            ],
+            "navTitle": "主/子码流",
+            "androidStatus_fn": ['主码流 通道', '子码流 通道']
+        },
+        "ComInfo": {
+            "navTitle": "串口序号 ",
+            "failMsg": '当前设备不支持声光报警器',
+            "callJSResult": [
+                '声光报警', '当前设备不支持声光报警器', '当前设备不支持声光报警器',
+                '刷卡器', '当前设备不支持刷卡器', '当前设备不支持刷卡器'
+            ]
+        },
+        "ComSettings": {
+            "template": [
+                "序号 ", "功能", "波特率", "数据位", "停止位", "校验位"
+            ],
+            "navTitle": "串口设置",
+            "filterABtn": ['无校验', '奇校验', '偶校验'],
+        },
+        "LoadSettings": {
+            "template": [
+                "型号 ", "当前电压值", "当前重量", "标定数目",
+                "删除", "添加", '序号', '当前重量', '标定重量'
+            ],
+            "templatePlaceholder": [
+                "请输入", "请输入", "请输入标定数目", "请输入",
+                "请输入"
+            ],
+        },
+        "PTZInfo": {
+            "template": [
+                "协议类型 ", "解码器地址", "请输入解码器地址", "流控"
+            ],
+            "navTitle": "云台通道 ",
+            "columnShowItem": "云台",
+            "callJSResult": "云台",
+        },
+        "PTZSettings": {
+            "template": [
+                "通道 ", "波特率", "数据位", "停止位", "校验位", "协议类型", "解码器地址",
+                " 位"
+            ],
+            "navTitle": "云台",
+        },
+        "ReversingCamera": {
+            "template": [
+                "启用", "视频通道", "触发开关", 
+                "视频输出", "等待时长", "请输入等待时长", "设置区域",
+                "确认", "取消"
+            ],
+            "navTitle": "倒车影像",
+            "columnChannel": "通道",
+            "columnVideoOutput": ["常无", "常有"]
+        },
+        "SessionSettings": {
+            "template": [
+                "循环覆盖", "主码流", "子码流", 
+                "主码流", "子码流"
+            ],
+            "navTitle": "存储设置",
+        },
+        "TemperatureSensingState": {
+            "template": [
+                "温感", "状态", "名称", 
+                "温度"
+            ],
+            "navTitle": "温感",
+            "filterStatus": "禁用,丢失,正常"
+        },
+        "TemperatureSensingStateDetails": {
+            "template": [
+                "启用", "ID", "名称", 
+                "温度上限报警功能","温度上限",
+                "温度下限报警功能","温度下限",
+                "蜂鸣器","上报频率","选择IO"
+            ],
+            "templatePlaceholder": [
+                "ID ", "请输入名称", "请输入上限值",
+                 "请输入下限值","请输入上报频率"
+            ],
+            "navTitle": "温度传感器 ",
+        },
+        "ToilLevel": {
+            "template": [
+                "类型", "总油量", "当前油量", 
+                "当前油位","传感器数据最大值",
+                "报警阀值","标定数目",
+                "删除","添加","序号",
+                "标定增量","标定油位"
+            ],
+            "templatePlaceholder": [
+                "请输入", "请输入标定数目", "请输入",
+                 "请输入"
+            ],
+            "navTitle": "油位",
+            "addCalibrationInfoFn": "最多20组"
+        },
+        "Tyrepressure": {
+            "template": [
+                "传感器序号", "传感器名称", "当前胎压", 
+                "当前胎温"
+            ],
+            "navTitle": "胎压",
+        },
+        "TyrepressureDerails": {
+            "template": [
+                "启用", "传感器名称", "最低胎压", 
+                "最高胎压","最低胎温","最高胎温",
+                "预览叠加","蜂鸣器","报警输出"
+            ],
+            "templatePlaceholder": [
+                "请输入名称", "请输入胎压", "请输入胎压",
+                 "请输入胎温","请输入胎温"
+            ],
+            "navTitle": "胎压传感器",
+        }
+    },
+    tw: {
+
+    }
+}

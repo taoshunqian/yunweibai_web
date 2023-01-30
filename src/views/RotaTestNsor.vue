@@ -138,7 +138,7 @@ const BottomSubmit = () => {
   cmds[1] = columns2.indexOf(deviceType.value);
   cmds[2] = checked2.value;
   cmds[4] = columns3.indexOf(state.value);
-  cmds = nowCmd.value + cmds.toString();
+  cmds = nowCmd.value + "," + cmds.toString();
   console.log(cmds)
   // alert(cmds);
   postAN.ANsendSetting(cmds);

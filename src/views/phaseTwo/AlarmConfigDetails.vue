@@ -1,0 +1,98 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup
+    inset
+    class="cell-group"
+    v-for="(item, index) in AlarmConfigInfo"
+    :key="index"
+    @click="getRouter(item)"
+  >
+    <Cell :title="'IO序号 ' + item[0]" :value="filtersCOlumns(item[1])" is-link />
+  </CellGroup>
+</template>
+
+
+<script setup>
+import TabHeaders from "@/components/tab.vue";
+import { Cell, CellGroup,Toast } from "vant";
+import { postAN } from "@/utlis/AdApi";
+import { defineComponent, ref, onMounted } from "vue";
+import router from "@/router";
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+import { useRoute } from "vue-router";
+let route = useRoute();
+
+const index = route.query.index;
+console.warn(index);
+
+const navTitle = ref("顶盖");
+let showType = 0;
+const AlarmConfigInfo = ref([]);
+
+const columns = [
+  "近光","远光","右转","左转","倒车","制动","雾灯","示廊灯","喇叭",
+  "空调状态","空挡信号","缓速器工作","ABS 工作","加热器工作","离合状态",
+  "前门","中门","后门","驾驶席门","自定义门","载重","保留位1","保留位2","顶盖传感器信号","举升传感器信号"
+];
+
+const filtersCOlumns = (val) => {
+  return columns[val] ?? "未配置功能";
+}
+
+const getRouter = (item) => {
+  console.log(showType);
+  router.push({
+    path: "/CodeStreamDetails",
+    query: {
+      channel: item[0],
+      type: showType
+    },
+  });
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  console.warn(cmdArr);
+  // alert(cmdArr)
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$IOINFO");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>
