@@ -199,7 +199,7 @@ const BottomSearch = () => {
 // 解析出支持设置的分辨率
 const splitStr = () => {
   var itemArr = item.split("#"); // 获取到是否启用
-  console.warn(item);
+  console.log(itemArr);
 
   var cameraArr = itemArr[1].split(":"); // 分辨率
 
@@ -209,7 +209,7 @@ const splitStr = () => {
   }else {
     checked.value = true;
   }
-  // alert(cameraArr[0]);
+
   deviceCamera.value = defineColumns[cameraArr[0] - 1]; // 获取到当前选择的分辨率
   var cameraArr2 = cameraArr[1].split("*");
 
@@ -234,7 +234,7 @@ const callJSResult = (str) => {
   // 获取摄像头分辨率
   if (cmds.indexOf("CAMERAMODE") !== -1) {
     var cmdArr2 = cmds.split(",").splice(2);
-    // console.log(cmds);
+    console.log(cmdArr2);
     let nowMirror2 = cmdArr2[index];
     item = nowMirror2;
     splitStr();
