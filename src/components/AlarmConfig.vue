@@ -44,6 +44,16 @@ import {
   defineEmits,
   reactive,
 } from "vue";
+import {
+  columnsBps,
+  columnsDatabits,
+  columnsStopbits,
+  columnsComStopbits,
+  columnsCheckbitsIndex,
+  columnsCheckbits,
+  columnOilType,
+  columnsCom
+} from "@/utlis/ConfigConst";
 const porps = defineProps([
   "model",
   "status",
@@ -51,23 +61,16 @@ const porps = defineProps([
   "title",
   "columnShowItem",
   "data",
+  // "stopBits"
 ]);
 import { columnComInfo } from "@/utlis/QueryStr";
-import {
-  columnsBps,
-  columnsDatabits,
-  columnsStopbits,
-  columnsCheckbits,
-  columnsCheckbitsIndex,
-  columnOilType,
-  columnsCom
-} from "@/utlis/ConfigConst";
 import { Toast } from "vant";
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 const emit = defineEmits(["comConfirm"]);
 const columnIndex = columnComInfo();
 const defultVal = t('AlarmConfigComponents.defultVal');
+// const columnsCheckbits = t("ConfigConst.columnsCheckbits").split(",");
 
 const titleColumns = reactive([
   {
@@ -109,6 +112,7 @@ const titleColumns = reactive([
 
 const model = ref(porps.model ?? 1); // 1.合并式 2.分割式
 const status = ref(porps.status ?? false); // 未使用
+const stopbits =  ref(porps.stopBits ?? false); // 停止位中可能存在 1，2
 const defaultIndex = ref(0);
 
 const columns = ref([]);
@@ -124,6 +128,7 @@ watchEffect(
     columnsFunction.value = porps.columnShowItem;
     var isOil = porps.data[0];
     data.value = porps.data;
+    stopbits.value = porps.stopBits;
     titleColumns.forEach((item, index) => {
       item.value = porps.data[index];
     });
@@ -179,7 +184,7 @@ const showPickerFn = (item) => {
       columns.value = columnsDatabits;
       break;
     case 5:
-      columns.value = columnsStopbits;
+      columns.value = stopbits.value ?  columnsStopbits :  columnsComStopbits;
       break;
     case 6:
       columns.value = columnsCheckbits;

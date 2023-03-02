@@ -1,6 +1,6 @@
 <template>
   <TabHeaders :navTitle="navTitle" :leftArrow="false" />
-
+  <!-- 启用 -->
   <CellGroup inset class="cell-group">
     <Cell :title="$t('ReversingCamera.template[0]')">
       <template #right-icon>
@@ -8,7 +8,7 @@
       </template>
     </Cell>
   </CellGroup>
-
+  <!-- 视频通道 -->
   <CellGroup inset class="cell-group">
     <Cell
       :title="$t('ReversingCamera.template[1]')"
@@ -18,22 +18,25 @@
     >
     </Cell>
   </CellGroup>
-
+  <!-- 触发开关 -->
   <CellGroup inset class="cell-group">
     <Cell :title="$t('ReversingCamera.template[2]')">
       <template #right-icon>
-        <RadioGroup v-model="reverCamera[2]" direction="horizontal">
-          <Radio
-            :name="index.toString()"
-            v-for="(item, index) in columnSwitch"
-            :key="index"
-            >{{ item }}</Radio
-          >
-        </RadioGroup>
+        <div style="width: 55%">
+          <RadioGroup v-model="reverCamera[2]" direction="horizontal">
+            <Radio
+              :name="index.toString()"
+              v-for="(item, index) in columnSwitch"
+              :key="index"
+              style="margin-bottom: 5px"
+              >{{ item }}</Radio
+            >
+          </RadioGroup>
+        </div>
       </template>
     </Cell>
   </CellGroup>
-
+  <!-- 视频输出 -->
   <CellGroup inset class="cell-group">
     <Cell :title="$t('ReversingCamera.template[3]')">
       <template #right-icon>
@@ -48,19 +51,15 @@
       </template>
     </Cell>
   </CellGroup>
-
+  <!-- 等待时长 -->
   <CellGroup inset class="cell-group">
-    <Field
-      :label="$t('ReversingCamera.template[4]')"
-      :placeholder="$t('ReversingCamera.template[5]')"
-      input-align="right"
-      v-model="reverCamera[4]"
-      type="number"
+    <Cell
+      :title="$t('ReversingCamera.template[4]')"
+      is-link
+      :value="reverCamera[4]"
+      @click="showPickerFn(4)"
     >
-      <template #button>
-        <span>S</span>
-      </template></Field
-    >
+    </Cell>
   </CellGroup>
 
   <CellGroup inset class="cell-group" style="margin: 20px; height: 40px">
@@ -72,7 +71,7 @@
   <Popup round v-model:show="showPicker" position="bottom">
     <Picker
       title=""
-      :columns="columnChannel"
+      :columns="columns"
       :default-index="defaultIndex"
       @cancel="showPicker = false"
       :confirm-button-text="$t('ReversingCamera.template[7]')"
@@ -97,7 +96,7 @@ import {
   Checkbox,
   Button,
   Toast,
-  Field,
+  // Field,
   Radio,
   Popup,
   Picker,
@@ -109,11 +108,16 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
 const navTitle = ref(t("ReversingCamera.navTitle"));
+
+const columns = ref([]);
 const columnChannel = []; // 视频通道
+const setValueIndex = ref(0);
+const columnTime = t("ReversingCamera.columnTime").split(",");
+const timeArr = ["30", "60", "120", "300"];
 for (var i = 1; i < 9; i++) {
   columnChannel.push(t("ReversingCamera.columnChannel") + " " + i);
 }
-const columnSwitch = ["IN 1", "IN 2"]; // 触发开关
+let columnSwitch = ref(["IN 1", "IN 2"]); // 触发开关
 const columnVideoOutput = [
   t("ReversingCamera.columnVideoOutput[0]"),
   t("ReversingCamera.columnVideoOutput[1]"),
@@ -132,17 +136,29 @@ const BottomSubmit = () => {
   var cmdArr = [...reverCamera.value];
   cmdArr[0] = +checked.value;
   cmdArr[1] = columnChannel.indexOf(cmdArr[1]) + 1;
+  cmdArr[4] = timeArr[columnTime.indexOf(cmdArr[4])];
   var cmd = "$REARCAMERA," + cmdArr.toString();
   console.warn("发送数据" + cmd);
   postAN.ANsendSetting(cmd);
 };
 
-const showPickerFn = () => {
+const showPickerFn = (num) => {
+  switch (num) {
+    case 1: // 视频通道
+      columns.value = columnChannel;
+      defaultIndex.value = columnChannel.indexOf(reverCamera.value[1]);
+      break;
+    case 4: // 等待时长
+      columns.value = columnTime;
+      defaultIndex.value = columnTime.indexOf(reverCamera.value[4]);
+      break;
+  }
+  setValueIndex.value = num;
   showPicker.value = true;
 };
 
 const onConfirm = (value) => {
-  reverCamera.value[1] = value;
+  reverCamera.value[setValueIndex.value] = value;
   showPicker.value = false;
 };
 
@@ -156,11 +172,20 @@ defineComponent({
 const callJSResult = (str) => {
   var cmds = str.split(";")[0];
   var cmdArr = cmds.split(",").splice(1);
+  if (cmds.indexOf("$VIDEOLOSS") !== -1) {
+    var leng = cmdArr.length;
+    columnSwitch.value = [];
+    for (var i = 0; i < leng; i++) {
+      columnSwitch.value.push("IN " + (i + 1));
+    }
+    return false;
+  }
   var index = cmdArr[1] - 1;
   var channelName = columnChannel[index];
   defaultIndex.value = index;
   cmdArr[1] = channelName;
   checked.value = !!+cmdArr[0];
+  cmdArr[4] = columnTime[timeArr.indexOf(cmdArr[4])];
   reverCamera.value = cmdArr;
 };
 // 安卓成功失败回调
@@ -175,6 +200,7 @@ const callJSResult_Status = (str) => {
 
 // 向安卓发送指令
 const androidStatus_fn = () => {
+  postAN.ANSend("$VIDEOLOSS");
   postAN.ANSend("$REARCAMERA");
 };
 androidStatus_fn();

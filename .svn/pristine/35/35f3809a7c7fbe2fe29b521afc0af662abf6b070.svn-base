@@ -1,0 +1,106 @@
+import { getQueryString } from "@/utlis/QueryStr";
+import { i18n } from '../locales/setupI18n';
+
+const { t,locale } = i18n.global;
+locale.value = getQueryString("la");
+
+export const columnsBps = [
+    "115200",
+    "57600",
+    "38400",
+    "19200",
+    "9600",
+    "4800",
+    "2400",
+    "1200",
+    "300",
+]; // 波特率
+export const columnsDatabits = ["8", "7", "6"]; // 波特率
+export const columnsStopbits = ["1", "2"]; // 停止位 
+export const columnsCheckbits = t("ConfigConst.columnsCheckbits").split(","); // 停止位
+export const columnsCheckbitsIndex = ["78", "79", "69"]; // 停止位
+export const columnOilType = ["TUB", "N08", "PLUG", "ITALON"];
+export const columnsCom = ["1", "2", "3", "4"]; // 波特率
+export const columnAgreementType = ["Pelco-D", "Pelco-p", "B01", "Samsung"];
+export const columnPower = ["D1", "CIF", "QCIF", "960H", "HALF_D1", "720P", "1080P", "1080N", "720N", "960P"];
+export const columnImage =  t("ConfigConst.columnImage").split(","); 
+export const columnVideo = ["H264", "H264+", "H265", "H265+"];
+export const colimnBitrate = t("ConfigConst.colimnBitrate").split(","); // 位率类型
+export const ipcPower = ["1920x1080", "1280x720"];
+
+export const AlarmInfo = t("ConfigConst.AlarmInfo").split(",");
+
+export const columnCom = t("ConfigConst.columnCom").split(","); // 全部产品
+
+
+// [
+//     "无",
+//     "透传",
+//     "云台",
+//     "油位",
+//     "TTS",
+//     "AIS（视霸渔船定制）",
+//     "COMPASS（视霸渔船定制）",
+//     "LCD（航大）",
+//     "LED（航大）",
+//     "RFID刷卡器",
+//     "万航广告屏（通立）",
+//     "485串口协议的油位传感器",
+//     "LED闪烁灯（LED_M2）",
+//     "一拖三串口功能（AU100）",
+//     "华翰LED广告屏",
+//     "外接GPS数据",
+//     "通立标准通信协议",
+//     "角度传感器",
+//     "胎压",
+//     "中油瑞飞指定液位仪",
+//     "GPS数据透传",
+//     "本安行车记录仪",
+//     "计价器",
+//     "川基车顶灯（波特率19200）",
+//     "JD_LED(波特率19200)@24",
+//     "微视创LED（波特率9600）",
+//     "清研ADAS",
+//     "瑞为ADAS",
+//     "河南军工ADAS",
+//     "四川畅云",
+//     "指纹识别",
+//     "学生卡抓拍",
+//     "苏标ADAS",
+//     "云安ADAS",
+//     "深圳渣土车 LED",
+//     "深圳渣土车雷达",
+//     "超速报警器",
+//     "硕龙LED",
+//     "TRANSMIT2-透传到指定服务器",
+//     "TRANSMIT3-透传到指定服务器",
+//     "OpenProtocol 控制透传",
+//     "产测小板专用",
+//     "中车刷卡器",
+//     "图软设备",
+//     "部标机LCD测试",
+//     "顺禾设备",
+//     "雄帝读卡器",
+//     "串口打印保存至文件",
+//     "BSD声光报警器",
+//     "AAL100 声光报警器",
+//     "ACR100 刷卡器",
+//     "势航四方位客户显示屏",
+//     "载重传感器",
+//     "广州正安声光报警器",
+//     "深圳汽车电子刷卡器",
+//     "上海埃而生电气",
+//     "多合一声光报警器",
+//     "势航雷达",
+//     "长春骏达",
+//     "长春骏达客流计数器",
+//     "海南称芯合意",
+//     "赛格酒精检测",
+//     "亿程读卡器",
+//     "WIC磁条卡读卡器",
+//     "GBT_19056",
+//     "天地宏华酒精检测仪",
+//     "青岛宇新F3协议液位传感器",
+//     "内蒙旭一雷达",
+//     "湖北东讯温度传感器",
+//   ];

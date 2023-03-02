@@ -1,0 +1,124 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- <AlarmConfig  /> -->
+
+  <CellGroup
+    inset
+    class="cell-group"
+    v-for="(item, index) in PTZData"
+    :key="index"
+    @click="getRouter(item)"
+  >
+    <Cell :title="$t('PTZSettings.template[0]') + item[0]" />
+    <Cell>
+      <template #title>
+        <ul>
+          <li>
+            {{ $t('PTZSettings.template[1]') }}: <span>{{ item[1] }}</span>
+          </li>
+          <li>
+            {{ $t('PTZSettings.template[2]') }}: <span>{{ item[2] + $t('PTZSettings.template[7]') }}</span>
+          </li>
+          <li>
+            {{ $t('PTZSettings.template[3]') }}: <span>{{ item[3] + $t('PTZSettings.template[7]') }}</span>
+          </li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+          <li>
+            {{ $t('PTZSettings.template[4]') }}: <span>{{ columnsCheckbits[item[4]] }}</span>
+          </li>
+          <li>
+            {{ $t('PTZSettings.template[5]') }}: <span>{{ columnAgreementType[item[5]] }}</span>
+          </li>
+          <li>
+            {{ $t('PTZSettings.template[6]') }}: <span>{{ item[6] }}</span>
+          </li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <footer style="padding-bottom: 50px"></footer>
+  <!-- <StickyBottom /> -->
+</template>
+
+
+<script setup>
+/*
+报警器 和 刷卡器 共用
+*/
+import TabHeaders from "@/components/tab.vue";
+// import StickyBottom from "@/components/stickyBottom.vue";
+// import AlarmConfig from "@/components/AlarmConfig.vue";
+import { CellGroup, Cell, Toast } from "vant"; // Checkbox
+import { defineComponent, ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
+import router from "@/router";
+const { t } = useI18n();
+import { postAN } from "@/utlis/AdApi";
+import { columnsCheckbits, columnAgreementType } from "@/utlis/ConfigConst";
+
+const navTitle = ref(t('PTZSettings.navTitle'));
+const PTZData = ref([]);
+
+const getRouter = (item) => {
+  router.push({
+    path: "/PTZInfo",
+    query: {
+      channel: item[0],
+    },
+  });
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-PTZSettings",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数r
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  console.warn("response --------> " + cmdArr);
+  var allArr = [];
+  cmdArr.forEach((item) => {
+    var it = item.split("*");
+    allArr.push(it);
+  });
+  PTZData.value = allArr;
+};
+// 安卓成功失败回调
+const callJSResult_Status = (str) => {
+  if (str.indexOf("Success") !== -1) {
+    Toast.success(t("toast[1]"));
+  } else {
+    Toast.fail(t("toast[2]"));
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$YUNTAIPARAM");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+.cell-group {
+  margin-top: 10px;
+}
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+</style>

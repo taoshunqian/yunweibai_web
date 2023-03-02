@@ -4,7 +4,7 @@
   <!-- IO 通道 -->
   <CellGroup inset style="margin: 10px" v-if="modelType == 1 || modelType == 2">
     <Cell
-      title="IO通道"
+      :title="$t('alarmInfo.labelTwo[0]')"
       is-link
       :value="channelInfo"
       @click="showPickerFn(5)"
@@ -14,7 +14,7 @@
   <!-- 功能 -->
   <CellGroup inset style="margin: 10px">
     <Cell
-      title="功能"
+      :title="$t('alarmInfo.labelTwo[1]')"
       is-link
       :value="filtersCOlumns(useFunctionKey)"
       @click="showPickerFn(4)"
@@ -246,53 +246,19 @@ import { defineComponent, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { postAN } from "@/utlis/AdApi";
 import { getQueryString } from "@/utlis/QueryStr";
+import { AlarmInfo } from "@/utlis/ConfigConst"
 
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
-const channelColumn = [
-  "通道 1",
-  "通道 2",
-  "通道 3",
-  "通道 4",
-  "通道 5",
-  "通道 6",
-  "通道 7",
-  "通道 8",
-];
+const channelColumn = t("alarmInfo.channelColumn").split(",");
 const i8nColumns2 = t("alarmInfo.columns2");
 const i8nColumns3 = t("alarmInfo.columns3");
 const channelTitle = t("alarmInfo.channelTitle");
-const columnsFuction = [
-  "近光",
-  "远光",
-  "右转",
-  "左转",
-  "倒车",
-  "制动",
-  "雾灯",
-  "示廊灯",
-  "喇叭",
-  "空调状态",
-  "空挡信号",
-  "缓速器工作",
-  "ABS 工作",
-  "加热器工作",
-  "离合状态",
-  "前门",
-  "中门",
-  "后门",
-  "驾驶席门",
-  "自定义门",
-  "载重",
-  "保留位1",
-  "保留位2",
-  "顶盖传感器信号",
-  "举升传感器信号",
-];
+const columnsFuction = AlarmInfo;
 
 const filtersCOlumns = (val) => {
-  return columnsFuction[val] ?? "未配置功能";
+  return columnsFuction[val] ?? t("alarmInfo.filtersCOlumns");
 };
 
 let route = useRoute();
@@ -304,14 +270,16 @@ const index = route.query.index; // 使用的指令段
 const columns = ref([]);
 const columns2 = ref(i8nColumns2.split(","));
 const columns3 = ref(i8nColumns3.split(","));
-const channelColumns3 = [];
-for (var i = 0; i < 9; i++) {
-  if (i == 0) {
-    channelColumns3.push(" " + channelTitle);
-  } else {
-    channelColumns3.push("AV " + i);
-  }
-}
+const channelColumns3 = ref([]);
+const channelColumns3Val = ref([]);
+// for (var i = 0; i < 9; i++) {
+//   if (i == 0) {
+//     channelColumns3.push(" " + channelTitle);
+//   } else {
+//     channelColumns3.push("AV " + i);
+//   }
+// }
+// channelColumns3.push(t("alarmInfo.channelColumns3"));
 
 
 //  报警录像通道号 抓拍通道号
@@ -334,7 +302,7 @@ const useFunctionKey = ref(0);
 const useFunctionCmd = ref([]);
 const modelType = ref(0);
 const activeIndex = ref(0);
-const channelInfo = ref("通道 ");
+const channelInfo = ref(t("AlarmInfoTwo.channelInfo"));
 const selectChannelChange = ref(false);
 
 type.value = columns2.value[setAlarmInfo.value[9]];
@@ -361,12 +329,13 @@ const BottomSubmit = () => {
   alarm[2] = +check.value;
   alarm[9] = columns2.value.indexOf(type.value);
   alarm[11] = columns3.value.indexOf(model.value);
-  console.warn(channel.value == channelTitle);
-  if (channel.value == channelTitle) {
-    alarm[3] = ""; // 画面切换通道
-  } else {
-    alarm[3] =   channelColumns3.indexOf(channel.value); // 画面切换通道
-  }
+  // console.warn(channel.value == channelTitle);
+  // if (channel.value == channelTitle) {
+  //   alarm[3] = ""; // 画面切换通道
+  // } else {
+    
+  // }
+  alarm[3] =  channelColumns3Val.value[channelColumns3.value.indexOf(channel.value)]; // 画面切换通道
   alarm[5] = byteChange(alarmChannel.value); // 报警录像通道号
   alarm[10] = byteChange(graspChannel.value); // 抓拍通道号
   allAlarm[indexInfo] = alarm;
@@ -395,7 +364,7 @@ const showPickerFn = (num) => {
   } else if (num == 3) {
     // 画面切换通道
     columns.value = channelColumns3;
-    defaultIndex.value = channelColumns3.indexOf(channel.value);
+    defaultIndex.value = channelColumns3.value.indexOf(channel.value);
   } else if (num == 4) {
     // 功能
     columns.value = columnsFuction;
@@ -485,9 +454,9 @@ const byteChange = (value) => {
 
 const selectChannel = () => {
   if (modelType.value == 1) {
-    navTitle.value = "举升";
+    navTitle.value = t("AlarmInfoTwo.selectChannel[0]");
   } else if (modelType.value == 2) {
-    navTitle.value = "顶盖";
+    navTitle.value = t("AlarmInfoTwo.selectChannel[1]");
   }
 };
 
@@ -496,6 +465,26 @@ const selectChannel = () => {
 const callJSResult = (str) => {
   var cmds = str.split(";")[0];
   selectChannel();
+
+  if(cmds.indexOf("SWITCHCHN") !== -1) {
+    var cmdArr3 = cmds.split(",").splice(1);
+    var value = [];
+    var name = [];
+    cmdArr3.forEach(item => {
+      var it = item.split("*");
+      value.push(it[0]);
+      if(it[1] == "No") {
+        name.push(channelTitle);
+      } else if(it[1] == "PollingMode") {
+        name.push(t("alarmInfo.channelColumns3"));
+      } else {
+        name.push(it[1]);
+      }
+    });
+    channelColumns3.value = name; // 
+    channelColumns3Val.value = value;
+  }
+
   if (cmds.indexOf("IOSIGNALTYPEV3") !== -1) {
     var cmdArr2 = cmds.split(",").splice(1);
     var allItem = [];
@@ -521,13 +510,13 @@ const callJSResult = (str) => {
         }
       }
       activeIndex.value = indexInfo;
-      Toast.fail("未检测到,IO 通道选中当前功能, 自动匹配到通道 " + (indexInfo + 1));
+      Toast.fail(t("AlarmInfoTwo.toast[0]") + (indexInfo + 1));
     }
 
     if (selectChannelChange.value) {
       activeIndex.value = channelInfo.value.split(" ")[1] - 1;
     } else {
-      channelInfo.value = "通道 " + (activeIndex.value + 1);
+      channelInfo.value = t("AlarmInfoTwo.toast[1]") + (activeIndex.value + 1);
     }
 
     useFunctionCmd.value = cmdArr2;
@@ -555,12 +544,11 @@ const callJSResult = (str) => {
 
     type.value = columns2.value[setAlarmInfo.value[9]]; // 类型
     model.value = columns3.value[setAlarmInfo.value[11]]; // 模式
-    // alert(setAlarmInfo.value[3]);
-    if (setAlarmInfo.value[3] == "") {
-      channel.value = channelTitle; // 画面切换通道
-    } else {
-      channel.value = channelColumns3[+setAlarmInfo.value[3]]; // 画面切换通道
-    }
+    // if (setAlarmInfo.value[3] == "") {
+    //   channel.value = channelTitle; // 画面切换通道
+    // } else {
+      channel.value = channelColumns3.value[+setAlarmInfo.value[3]]; // 画面切换通道
+    // }
     var alarmChannelStr = new Number(+setAlarmInfo.value[5]).toString(2);
     alarmChannel.value = baseChange(alarmChannelStr); // 报警录像通道号
     var graspChannelStr = new Number(+setAlarmInfo.value[10]).toString(2);
@@ -586,9 +574,12 @@ const androidStatus_fn = () => {
   modelType.value = param[param.length - 1];
   // modelType.value = 1; // 2 = 顶盖 1 = 举升  其它
   postAN.ANSend("$IOSIGNALTYPEV3");
+  postAN.ANSend("$SWITCHCHN");
   setTimeout(() => {
     postAN.ANSend("$IOINFO");
   }, 500);
+
+  
 };
 
 onMounted(() => {
