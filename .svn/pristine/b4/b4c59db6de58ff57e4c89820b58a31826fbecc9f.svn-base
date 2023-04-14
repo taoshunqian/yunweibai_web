@@ -1,0 +1,37 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+  <!-- {{ $t('home') }} -->
+  <Button plain type="primary" @click="Router(item.path)" class="button"
+    v-for="(item,index) in routers" :key="index">{{item.name}}</Button
+  >
+
+  <Button type="primary" size="large" @click="setLang">切换语言</Button>
+</template>
+
+<script setup>
+import { Button } from "vant";
+import { defineComponent, ref } from "vue";
+import mixins from '../mixins/index.js'
+let {  t,locale,router,TabHeaders }= mixins();
+const navTitle = ref(t('home'));
+const routers = router.getRoutes();
+const setLang = () => {
+  locale.value = 'en';
+}
+
+
+const Router = (e) => {
+  router.push(e);
+};
+
+defineComponent({
+  name: "yunweibao-Home",
+});
+
+</script>
+
+<style  scoped lang="scss">
+.button {
+  margin: 10px 20px;
+}
+</style>>

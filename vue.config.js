@@ -1,13 +1,8 @@
 const { defineConfig } = require('@vue/cli-service');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer'); // 分析依赖的第三方模块文件大小,分析业务里面的组件代码大小
-const SpeedMeasureWebpackPlugin = require('speed-measure-webpack-plugin');
-const smp = new SpeedMeasureWebpackPlugin(); // 分析整个打包总耗时, 每个插件和loader的耗时情况
-
-
-
-// const htmlWebpackExternalsPlugin = require('html-webpack-externals-plugin');
-// const { default: config } = require('vux/src/plugins/config');
+const envProduction = require('./webpack.production');
+const envDevelopment = require('./webpack.development');
+const env = process.env.NODE_EVN;
+const state = env == "development" ?  true  : false;
 
 function formartDate() {
   var dates = new Date();
@@ -43,84 +38,7 @@ module.exports = defineConfig({
   publicPath: './',
   lintOnSave: false,
   devServer: {
-    open: true
+    open: state
   },
-  configureWebpack: smp.wrap({
-    mode: "production",
-    entry: {
-      library: [
-        "vue",
-        "vue-router"
-      ]
-    },
-    output: {
-      filename: '[name].dll.js', // vue vue-router 单独输出打包文件
-      library: '[name]'
-    },
-    plugins: [
-      // new htmlWebpackExternalsPlugin({
-      //   externals: [
-      //     {
-      //       module: 'vue',
-      //       extry: "unpkg.com/vue-router@4.1.6/dist/vue-router.global.js",
-      //       global: 'createApp'
-      //     },
-      //     {
-      //       module: "vue-router",
-      //       extry: "cdnjs.cloudflare.com/ajax/libs/vue/3.0.5/vue.global.js",
-      //       global: 'createRouter'
-      //     }
-      //   ]
-      // }),
-      new BundleAnalyzerPlugin(),
-      //  并行压缩 开启 parallel 参数
-      new UglifyJsPlugin({
-        uglifyOptions: {
-            warning: false,
-            parse: {},
-            compress: {},
-            mangle: true,
-            output: null,
-            toplevel: false,
-            nameCache: null,
-            ie8: null,
-            keep_fnames: false
-        },
-        parallel: true
-      })
-    ],
-    module: {
-      rules: [
-        {
-          test: /\.js$/,
-          exclude: /node_modules/,  // 缩小构建目标
-          options: {
-            "presets": [
-              ["@babel/preset-env", {
-                "useBuiltIns": "usage",
-                "corejs": {
-                  "version": 3
-                },
-                "targets": {
-                  "chrome": "70",
-                  "firefox": "60",
-                  "ie": "7",
-                  "safari": "10",
-                  "edge": "17",
-                }
-              }],
-            ],
-            "plugins": [
-              [
-                "transform-remove-console", {
-                  "exclude": ["log","warn"]
-                }
-              ]
-            ],
-          },
-          loader: 'babel-loader', //  'babel-loader' thread-loader
-        }
-      ]
-    }
-  })
+  configureWebpack: state ?  envDevelopment  : envProduction
 })

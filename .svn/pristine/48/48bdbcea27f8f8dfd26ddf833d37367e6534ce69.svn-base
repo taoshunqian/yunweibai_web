@@ -1,0 +1,341 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="lavelMuch" />
+
+  <AlarmConfig
+    model="2"
+    :status="status"
+    :stopBits="stopBits"
+    :data="comInfo"
+    :version="version"
+    :oilTypeInfo="oilTypeInfo"
+    :columnShowItem="columnShowItem"
+    @comConfirm="comConfirm"
+    v-if="!errorShow"
+  />
+
+  <Empty image="error" :description="failMsg" v-else />
+
+  <StickyBottom
+    @BottomSubmit="BottomSubmit"
+    @BottomSearch="BottomSearch"
+    v-if="!errorShow"
+  />
+</template>
+
+<script setup>
+/*
+  @view 报警器 , 刷卡器, 油位， 串口设置二级页面 共用
+  @author taoshunqian
+  @lastUpdate 2023/04/14
+  @explain 
+    1. 根据不同的版本下发不同的指令，区别点最大 11 版本
+    2. 实现效果：串口选中分为 选中 [ 油位 ] 和 [ 其它 ] 
+    3. 选中[ 其它 ]类型时走基本逻辑
+    4. 选中[ 油位 ]类型，分为 选中[ 油箱 ] 和 没有选中 [ 油箱 ]
+    5. 选中 [ 油箱 ], 下发[ 油位类型 ]，使用 [ OILPARAMV3 ] 指令 ( 当前油位和当前油量在下发数据中剔除 )
+    6. 没有选中 [ 油箱 ], 下发[ 油位类型 ]，使用 [ GASOLINETYPE ] 指令
+    7. 11 版本以及以后版本，[ 油位类型 ]的选择项，通过 [ OILLISTPARAM ] 获取，不支持选项隐藏
+    8. 通过 [ version ] 判定当前版本号
+    9. 将 串口 为油位的串口，设置为其它类型，再设置为油位时恢复为原本设置油位的 油位类型
+*/
+
+import AlarmConfig from "@/components/AlarmConfig.vue";
+import { Toast, Empty } from "vant";
+import { defineComponent, ref, onMounted, onBeforeUnmount } from "vue";
+import { columnComInfo, filterABtn, getQueryString } from "@/utlis/QueryStr";
+import { columnOilType } from "@/utlis/ConfigConst";
+import { getVersion } from "@/utlis/VersionBranch";
+import mixins from "@/mixins/index.js";
+let { t, postAN, TabHeaders, StickyBottom, useRoute, callJSResult_Status } =
+  mixins();
+
+let route = useRoute();
+const index = route.query.index;
+const first = ref(true);
+const columnIndex = columnComInfo();
+
+const columnShowItem = ref([]);
+const comInfo = ref([]);
+const navTitle = ref(t("ComInfo.navTitle"));
+const allCmdList = ref([]); // 解析的完整指令
+const status = ref(true); // 状态更新
+const isSend = ref(false); // 是否允许设置参数
+const stopBits = ref(true); // 停止位
+const lavelMuch = ref(true);
+const type = ref(0);
+const failMsg = ref(t("ComInfo.failMsg"));
+const errorShow = ref(false);
+const alarmIndexInfo = ref(-1);
+const cardIndexInfo = ref(-1);
+const oilTypeInfo = ref([]); // 可以使用的油位类型
+const version = ref(0); // 版本号
+const oilParam = ref(-1); // 当前使用的串口号
+const oilParamArr = ref([]);
+
+const BottomSearch = () => {
+  androidStatus_fn();
+  isSend.value = false;
+};
+
+const BottomSubmit = () => {
+  status.value = !status.value;
+  isSend.value = true;
+};
+
+const comConfirm = (value) => {
+  var ix = 0;
+  if (type.value == 1) {
+    ix = alarmIndexInfo.value - 1;
+  } else if (type.value == 2) {
+    ix = cardIndexInfo.value - 1;
+  } else {
+    ix = index - 1;
+  }
+  if (isSend.value) {
+    ix = ix == -1 ? 0 : ix;
+    allCmdList.value[ix] = ix + 1 + "," + value.toString();
+    var cmdList = [...allCmdList.value];
+    var send = "$UARTSET," + cmdList[ix];
+    postAN.ANsendSetting(send);
+
+    var oilType = value[value.length - 1];
+
+    // 版本 >= 11 并且选中 类型选为 油位 执行， 确保将油位类型设置为其它时，原本的油位类型不变
+    if (version.value >= 11 && oilType != -1) {
+      var oilValue = oilTypeInfo.value[oilType];
+      var sendOilType = columnOilType.indexOf(oilValue); // 获取选中的油位类型的值域
+      if (oilParam.value !== -1) { // 油箱已经选择
+        
+        var param = [...oilParamArr.value][ix].split("~");
+        param[0] = sendOilType;
+        param.splice(7, 2); // 当前油位 和 油量 不需要发送
+        var sendParam = "$OILPARAMV3," + param;
+        postAN.ANsendSetting(sendParam);
+
+      } else { // 油箱没有选择
+        
+        var defindSend = "$GASOLINETYPE," + sendOilType;
+        postAN.ANsendSetting(defindSend);
+
+      }
+    }
+  }
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-ComInfo",
+});
+
+const alarmShowIndex = (arr, arr2) => {
+  var index = false;
+  for (var i = 0; i < arr.length; i++) {
+    if (arr2.includes(arr[i])) {
+      console.log(arr2 + "-------" + arr[i]);
+      index = true;
+      return index;
+    }
+  }
+  return index;
+};
+
+const modelDevicesInfo = (
+  itemShowIndexArr,
+  showArr,
+  basciALlArr,
+  allArr,
+  index
+) => {
+  var ind = index == 0 ? 0 : index - 1;
+  columnShowItem.value = showArr;
+  // alert(index)
+  var itemIndex = itemShowIndexArr[ind];
+  // navTitle.value = navTitle.value + index;
+  itemIndex.forEach((item) => {
+    showArr.push(columnIndex[item]);
+  });
+
+  allCmdList.value = basciALlArr;
+  var data = allArr[ind];
+  data.shift();
+  data[4] = filterABtn(data[4]);
+  // alert(showArr)
+  comInfo.value = data;
+};
+
+// 获取 选择油箱 选中的 油位类型
+const getOilType = (cmdArr, index) => {
+  var oilType = -1;
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("~");
+    if (item[10] == index) {
+      oilType = item[0];
+      oilParam.value = item[8];
+    }
+  }
+  return oilType;
+};
+
+// 获取 >= 11 版本 油位类型
+const getOilTypeList = (oilList) => {
+  var cmdsList = [];
+  for (var i = 0; i < columnOilType.length; i++) {
+    if (oilList.includes(i.toString())) {
+      cmdsList.push(columnOilType[i]);
+    }
+  }
+  return cmdsList;
+};
+
+// -------------------------------------------------------------------
+
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+
+  if (cmds.indexOf("OILLISTPARAM") !== -1) { // 获取 >= 11 版本 油位类型
+    var oilList = cmdArr.splice(1);
+    var oil = getOilTypeList(oilList);
+    oilTypeInfo.value = [...oil];
+    return false;
+  }
+
+  if (cmds.indexOf("GASOLINETYPE") !== -1) {
+    comInfo.value.push(cmdArr[0]); // 在没有设置油箱时，默认选中
+    return false;
+  }
+
+  if (cmds.indexOf("OILPARAMV3") !== -1) {
+    // 获取 选中油箱的 油位类型
+    var oilType = getOilType(cmdArr, index);
+    oilParamArr.value = cmdArr;
+    if (oilType == -1) {
+      // Toast.fail("请先绑定油箱,否则可能导致油位类型设置失败");
+      postAN.ANSend("$GASOLINETYPE"); // 没有油箱绑定到 串口
+    } else {
+      comInfo.value.push(oilType); // 设置油位类型
+    }
+    return false;
+  }
+
+  if (cmds.indexOf("WEB3VERSION") !== -1) {
+    // 获取版本号
+    getVersion(str, (msg) => {
+      if (msg == "11") {
+        // 获取到版本信息 大于等于 11 版本
+        postAN.ANSend("$OILPARAMV3");
+        postAN.ANSend("$OILLISTPARAM");
+      }
+      version.value = parseInt(msg);
+    });
+    return false;
+  }
+
+  // 通用 解析 数据
+  var allArr = [];
+  var itemShowIndexArr = [];
+  var showArr = [];
+  var basciALlArr = [];
+  var alarmShow = ["53", "48", "49"]; // 声光报警序号
+  var cardShow = ["50", "9"]; // 刷卡器
+
+  for (var i = 0; i < cmdArr.length; i++) {
+    var item = cmdArr[i].split("~");
+    var item2 = cmdArr[i].split("~");
+    var itIndex = [...item[1].split("*")];
+    var alarmIndex = alarmShowIndex(itIndex, alarmShow);
+    var cardIndex = alarmShowIndex(itIndex, cardShow);
+    if (cardIndex) {
+      cardIndexInfo.value = i;
+    }
+    if (alarmIndex) {
+      alarmIndexInfo.value = i;
+    }
+    item2[1] = itIndex[0];
+    var activeIndex = itIndex[0];
+    itemShowIndexArr.push(itIndex.slice(1));
+    item[1] = columnIndex[activeIndex];
+    basciALlArr.push(item2);
+    allArr.push(item);
+  }
+  if (type.value == 1) {
+    navTitle.value = t("ComInfo.callJSResult[0]");
+    if (alarmIndexInfo.value == -1) {
+      Toast.fail(t("ComInfo.callJSResult[1]"));
+      failMsg.value = t("ComInfo.callJSResult[2]");
+      errorShow.value = true;
+
+      return false;
+    }
+    modelDevicesInfo(
+      itemShowIndexArr,
+      showArr,
+      basciALlArr,
+      allArr,
+      alarmIndexInfo.value
+    );
+  } else if (type.value == 2) {
+    navTitle.value = t("ComInfo.callJSResult[3]");
+    if (cardIndexInfo.value == -1) {
+      Toast.fail(t("ComInfo.callJSResult[4]"));
+      failMsg.value = t("ComInfo.callJSResult[5]");
+      errorShow.value = true;
+
+      return false;
+    }
+
+    modelDevicesInfo(
+      itemShowIndexArr,
+      showArr,
+      basciALlArr,
+      allArr,
+      cardIndexInfo.value
+    );
+  } else {
+    if (first.value) {
+      navTitle.value = navTitle.value + index;
+      first.value = false;
+    }
+
+    modelDevicesInfo(itemShowIndexArr, showArr, basciALlArr, allArr, index);
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令 // .split("@")
+  type.value = param[param.length - 1]; //  1: 声光报警 2.刷卡器   !1 || !2 其它
+  // type.value = 1; //  1: 声光报警 2.刷卡器
+  if (type.value == 1 || type.value == 2) {
+    lavelMuch.value = false;
+    stopBits.value = false;
+  } else {
+    lavelMuch.value = true;
+  }
+  postAN.ANSend("$UARTSET");
+  postAN.ANSend("$WEB3VERSION");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+
+onBeforeUnmount(() => {
+  console.log("离开当前路由-------------");
+  localStorage.stopBits = false;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin-top: 10px;
+}
+</style>

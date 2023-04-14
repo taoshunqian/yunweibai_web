@@ -4,7 +4,7 @@ import messages from './getMessage'
 //注册i8n实例并引入语言文件
 const localeData = {
   legacy: false,
-  locale: 'en',
+  locale: 'zh',
   messages,
 }
 

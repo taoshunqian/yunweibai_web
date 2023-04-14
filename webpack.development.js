@@ -1,0 +1,36 @@
+module.exports ={
+    mode: "development",
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,  // 缩小构建目标
+                options: {
+                    "presets": [
+                        ["@babel/preset-env", {
+                            "useBuiltIns": "usage",
+                            "corejs": {
+                                "version": 3
+                            },
+                            "targets": {
+                                "chrome": "70",
+                                "firefox": "60",
+                                "ie": "7",
+                                "safari": "10",
+                                "edge": "17",
+                            }
+                        }],
+                    ],
+                    "plugins": [
+                        [
+                            "transform-remove-console", {
+                                "exclude": ["log", "warn"]
+                            }
+                        ]
+                    ],
+                },
+                loader: 'babel-loader', //  'babel-loader' thread-loader
+            }
+        ]
+    }
+};
