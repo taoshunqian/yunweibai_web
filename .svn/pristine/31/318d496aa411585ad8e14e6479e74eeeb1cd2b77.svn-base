@@ -1,0 +1,152 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- 预览声音叠加 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="template[4]">
+      <template #right-icon>
+        <div>
+          <Checkbox
+            v-model="checked"
+            shape="square"
+            icon-size="15px"
+            style="margin-top: 5px; margin-right: 5px"
+          ></Checkbox>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <!-- 输入增益 -->
+  <CellGroup
+    inset
+    style="margin: 10px"
+    v-for="(item, index) in values"
+    :key="index"
+  >
+    <Cell :title="template[index]">
+      <template #right-icon>
+        <div class="custom">
+          <Slider
+            v-model="values[index]"
+            :max="index == 3 ? '100' : '10'"
+            bar-height="5px"
+          >
+            <template #button>
+              <div class="custom-button">{{ values[index] }}</div>
+            </template>
+          </Slider>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+</template>
+
+<script setup>
+import { CellGroup, Cell, Slider, Checkbox } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import mixins from "@/mixins/index.js";
+
+let { postAN, TabHeaders, StickyBottom, callJSResult_Status } = mixins();
+const Lang = {
+  navTitle: "音频设置",
+  template: [
+    "输入增益",
+    "输出增益",
+    "TTS音量",
+    "声光报警器音量",
+    "预览声音叠加",
+  ],
+  audio: ["ADPCM", "IMA", "DV14", "MG726", "G711A", "G711U", "G726"],
+  bps: ["16k", "24k", "32k", "40k"],
+};
+const navTitle = ref(Lang["navTitle"]); // 标题
+const template = Lang["template"];
+const values = ref([50, 0, 0, 0]);
+const checked = ref(true);
+const info = ref([]);
+
+defineComponent({
+  name: "yunweibao-BootPreview",
+});
+
+// 查询
+const BottomSearch = () => {
+  androidStatus_fn();
+  return false;
+};
+// 保存
+const BottomSubmit = () => {
+  var audioInfo = [...info.value];
+  var req1 = [...values.value];
+  audioInfo[0] = req1[0];
+  audioInfo[1] = req1[1];
+  audioInfo[4] = req1[2];
+  audioInfo.splice(5);
+
+  var witch = "$AUDIOSWITCH," + +checked.value;
+  var aal100 = "$AAL100," + req1[3];
+  var audio = "$AUDIOSETV3," + audioInfo.toString();
+  postAN.ANsendSetting(audio); // 音频
+  postAN.ANsendSetting(witch); // 使能
+  postAN.ANsendSetting(aal100); // 声光报警器
+  console.warn(req1);
+  return false;
+};
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  if (cmds.indexOf("AAL100") !== -1) {
+    values.value.push(cmdArr[0]);
+    return false;
+  }
+
+  if (cmds.indexOf("AUDIOSWITCH") !== -1) {
+    checked.value = !!+cmdArr[0];
+    return false;
+  }
+
+  info.value = cmdArr;
+  values.value = [cmdArr[0], cmdArr[1], cmdArr[4]];
+  console.log("获取" + cmdArr);
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$AUDIOSETV3");
+  postAN.ANSend("$AUDIOSWITCH");
+  setTimeout(() => {
+    postAN.ANSend("$AAL100");
+  }, 500);
+};
+
+// callJSResult("$AUDIOSET,4,10,6,3,10,5*6*7,1*2*3*4");
+
+onMounted(() => {
+  androidStatus_fn();
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+.custom {
+  width: 50%;
+  padding-top: 8px;
+  margin-right: 5px;
+}
+.custom-button {
+  width: 30px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+  background-color: var(--van-primary-color);
+  border-radius: 100px;
+}
+</style>

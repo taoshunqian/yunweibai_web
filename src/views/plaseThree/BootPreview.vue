@@ -1,0 +1,328 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <!-- 轮询间隔 -->
+  <CellGroup inset style="margin: 10px" v-if="version >= 10">
+    <Cell title="轮询间隔" is-link :value="poll" @click="showPickerFn(1)" />
+  </CellGroup>
+
+  <!-- 延迟间隔 -->
+  <CellGroup inset style="margin: 10px" v-if="version >= 10">
+    <Cell title="延迟间隔" is-link :value="delayed" @click="showPickerFn(2)" />
+  </CellGroup>
+
+  <!-- 预览通道 -->
+  <CellGroup
+    inset
+    style="margin: 10px"
+    v-show="selectChannel.includes(activeChannelStyle)"
+  >
+    <Cell
+      title="预览通道"
+      is-link
+      :value="activeChannel"
+      @click="showPickerFn(3)"
+    />
+  </CellGroup>
+
+  <!-- 显示模式 -->
+  <CellGroup inset style="margin: 10px">
+    <Collapse v-model="activeNames">
+      <CollapseItem name="1" :value="activeModel">
+        <template #title>
+          <div>显示模式</div>
+        </template>
+        <div class="channelList">
+          <Row>
+            <Col span="8" v-for="(item, index) in model" :key="index">
+              <div class="channelItem" @click="selectVideoLess(item)">
+                <div
+                  :class="
+                    activeChannelStyle == Modelfilter(item)[1] ? 'active' : ''
+                  "
+                >
+                  <BootPreviewSvg :img="index" />
+                  <p>{{ Modelfilter(item)[0] }}</p>
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </div>
+      </CollapseItem>
+    </Collapse>
+  </CellGroup>
+
+  <!-- 弹出层 -->
+  <Popup round v-model:show="showPicker" position="bottom">
+    <Picker
+      :default-index="defaultIndex"
+      :columns="columns"
+      @cancel="showPicker = false"
+      @confirm="onConfirm"
+      :confirm-button-text="$t('picker[0]')"
+      :cancel-button-text="$t('picker[1]')"
+    />
+  </Popup>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+</template>
+
+<script setup>
+import {
+  CellGroup,
+  Cell,
+  Collapse,
+  CollapseItem,
+  Col,
+  Row,
+  Popup,
+  Picker,
+} from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import BootPreviewSvg from "@/components/BootPreview/BootPreviewSvg.vue";
+import mixins from "@/mixins/index.js";
+import { getVersion } from "@/utlis/VersionBranch";
+
+let { postAN, TabHeaders, StickyBottom, callJSResult_Status } = mixins();
+const Lang = {
+  navTitle: "开机预览",
+  model: [
+    `单画面@0`,
+    "四画面1-4@1",
+    "六画面@2",
+    "八画面@3",
+    "九画面@4",
+    "四画面5-8@5",
+    "垂直分割的两画面@6",
+    "水平分割的两画面@7",
+    "上一下二的三画面@8",
+    "垂直H的四画面@9",
+    "水平H的四画面@10",
+    "五画面@11",
+    "五画面(IPC)@12",
+    "川字形的三画面@13",
+    "上二下一的三画面@14",
+    "十二画面@15",
+    "三分割六画面@16",
+  ],
+  pollingAndDelayed: [
+    `否@0`,
+    "5 s@1",
+    "10 s@2",
+    "20 s@3",
+    "30 s@4",
+    "1 min@5",
+    "2 min@6",
+    "5 min@7",
+  ],
+};
+const navTitle = ref(Lang["navTitle"]); // 标题
+
+const activeNames = ref(["1"]);
+
+const activeChannelStyle = ref(0);
+
+const defaultIndex = ref(1);
+const showPicker = ref(false);
+const columns = ref([]);
+const statePocker = ref(1);
+
+const model = ref(Lang["model"]); // 显示模式
+const activeModel = ref(""); // 选中 显示模式
+
+const showChannels = ref([]); // 预览通道 选项
+const activeChannel = ref(""); // 选中 预览通道
+
+const pillingList = ref([]); // 轮询
+const poll = ref(""); // 选中 轮询
+
+const delayedList = ref([]); // 延迟
+const delayed = ref(""); // 选中 延迟
+
+const version = ref(0);
+const selectChannel = [0, 2, 3]; // 允许设置 预览通道 的模式
+
+defineComponent({
+  name: "yunweibao-BootPreview",
+});
+
+// 查询
+const BottomSearch = () => {
+  androidStatus_fn();
+  return false;
+};
+// 保存
+const BottomSubmit = () => {
+  var modelArr = getSelectValue(Lang["model"]);
+  var modelIndex = modelArr.arr.indexOf(activeModel.value);
+  var activeModelVal = modelArr.values[modelIndex];
+  var channelIndex = showChannels.value.indexOf(activeChannel.value);
+  var send = [];
+  var cmds = "";
+
+  if (version.value >= 10) {
+    var pollAnddelayedArr = getSelectValue(Lang["pollingAndDelayed"]);
+    var delayedIndex = pollAnddelayedArr.arr.indexOf(delayed.value);
+    var activeDelayedVal = pollAnddelayedArr.values[delayedIndex];
+    var pollIndex = pollAnddelayedArr.arr.indexOf(poll.value);
+    var activePollVal = pollAnddelayedArr.values[pollIndex];
+    send = [activeModelVal, channelIndex + 1, activePollVal, activeDelayedVal];
+    cmds = "$SCREENMODE," + send.toString();
+    console.log("下发" + cmds);
+    postAN.ANsendSetting(cmds); // 功能设置
+  } else {
+    send = [activeModelVal, channelIndex + 1];
+    cmds = "$SCREENMODE," + send.toString();
+    console.log("下发" + cmds);
+    postAN.ANsendSetting(cmds); // 功能设置
+  }
+  return false;
+};
+
+const selectVideoLess = (item) => {
+  var values = Modelfilter(item);
+  //   alert(values);
+  activeChannelStyle.value = parseInt(values[1]);
+  activeModel.value = values[0];
+};
+
+const showPickerFn = (num) => {
+  if (num == 1) {
+    columns.value = pillingList.value;
+    defaultIndex.value = pillingList.value.indexOf(poll.value);
+  } else if (num == 2) {
+    columns.value = delayedList.value;
+    defaultIndex.value = delayedList.value.indexOf(delayed.value);
+  } else if (num == 3) {
+    columns.value = showChannels.value;
+    defaultIndex.value = showChannels.value.indexOf(activeChannel.value);
+  }
+  showPicker.value = true;
+  statePocker.value = num;
+};
+
+const Modelfilter = (item) => {
+  return item.split("@");
+};
+
+const onConfirm = (value) => {
+  showPicker.value = false;
+  var index = statePocker.value;
+  if (index == 1) {
+    poll.value = value;
+  } else if (index == 2) {
+    delayed.value = value;
+  } else if (index == 3) {
+    activeChannel.value = value;
+  }
+};
+
+const getSelectValue = (data) => {
+  var arr = [];
+  var values = [];
+  for (var i = 0; i < data.length; i++) {
+    var item = Modelfilter(data[i]);
+    arr.push(item[0]);
+    values.push(item[1]);
+  }
+  return {
+    arr,
+    values,
+  };
+};
+
+const getShowData = (data, activeIndex, include, returnType) => {
+  var arr = [];
+  var active = "";
+  for (var i = 0; i < data.length; i++) {
+    var item = Modelfilter(data[i]);
+    if (include.includes(item[1])) {
+      if (returnType) {
+        arr.push(data[i]);
+      } else {
+        arr.push(item[0]);
+      }
+      if (item[1] == activeIndex) {
+        active = data[i];
+      }
+    }
+  }
+  return { arr, active };
+};
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  console.log("获取" + cmdArr);
+
+  var supportChannel = cmdArr[0].split("*");
+  var supportChannels = cmdArr[2].split("*");
+  var channelArr = [...model.value];
+
+  showChannels.value = supportChannels;
+  activeChannel.value = supportChannels[cmdArr[3] - 1];
+
+  // 显示模式
+  var modelInfo = getShowData(channelArr, cmdArr[1], supportChannel, true);
+  model.value = modelInfo.arr;
+  selectVideoLess(modelInfo.active.toString());
+
+  if (version.value >= 10) {
+    // 轮询间隔
+    var pollInfo = getShowData(Lang["pollingAndDelayed"], cmdArr[5], cmdArr[4]);
+    // alert(pollInfo.active)
+    pillingList.value = pollInfo.arr;
+    poll.value = pollInfo.active.split("@")[0];
+
+    // 延时间隔
+    var delayedInfo = getShowData(
+      Lang["pollingAndDelayed"],
+      cmdArr[7],
+      cmdArr[6]
+    );
+    delayedList.value = delayedInfo.arr;
+    delayed.value = delayedInfo.active.split("@")[0];
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  var versionInfo = postAN.ANVersion();
+  getVersion(versionInfo, (msg) => {
+    version.value = parseInt(msg);
+    postAN.ANSend("$SCREENMODE");
+  });
+};
+
+onMounted(() => {
+  activeModel.value = Modelfilter(Lang["model"][0])[0];
+  androidStatus_fn();
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+.channelItem {
+  margin: 5px 0px;
+  text-align: center;
+}
+
+.channelItem > div {
+  padding: 5px;
+  display: inline-block;
+  border: 1px solid #ffffff;
+}
+
+.active {
+  border: 1px solid var(---var-doc-active);
+  color: var(---var-doc-active);
+}
+
+p {
+  margin: 0px;
+  text-align: center;
+  font-size: 12px;
+}
+</style>

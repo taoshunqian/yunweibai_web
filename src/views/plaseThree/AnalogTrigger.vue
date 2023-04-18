@@ -1,0 +1,228 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px">
+    <Field
+      v-model="speed"
+      label="模拟速度"
+      input-align="right"
+      type="number"
+      :error="showError"
+      @blur="setSpeed(speed)"
+      required
+    >
+      <template #button>
+        <van-button size="small" type="primary">( {{ unit }} )</van-button>
+      </template>
+    </Field>
+  </CellGroup>
+
+  <RadioGroup v-model="radio">
+    <Collapse style="margin: 10px" v-model="activeNames">
+      <CollapseItem
+        :title="item['text']"
+        :name="index"
+        v-for="(item, index) in algorithm"
+        :key="index"
+      >
+        <div style="padding: 10px 0px">
+          <Row>
+            <Col span="8" v-for="(it, inx) in item['arr']" :key="inx">
+              <Radio style="margin-bottom: 10px" :name="Modelfilter(it)[0]">{{
+                Modelfilter(it)[1]
+              }}</Radio>
+            </Col>
+          </Row>
+        </div>
+      </CollapseItem>
+    </Collapse>
+  </RadioGroup>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+</template>
+
+<script setup>
+import {
+  CellGroup,
+  Radio,
+  Field,
+  Row,
+  Col,
+  RadioGroup,
+  Collapse,
+  CollapseItem,
+} from "vant";
+import { defineComponent, ref, onMounted, inject } from "vue";
+import mixins from "@/mixins/index.js";
+
+let { postAN, TabHeaders, StickyBottom, callJSResult_Status } = mixins();
+const Lang = {
+  navTitle: "模拟触发",
+  powerType: ["12V", "24V", "自动"],
+  algorithm: [
+    {
+      text: "ADAS",
+      arr: [
+        "ADAS,0,0x01@前向碰撞报警",
+        "ADAS,0,0x02@车道偏离报警",
+        "ADAS,0,0x03@车距过近报警",
+        "ADAS,0,0x04@行人碰撞报警",
+        "ADAS,0,0x05@频繁变道报警",
+        "ADAS,0,0x07@障碍物报警",
+        "ADAS,0,0x10@道路标志识别事件",
+        "ADAS,0,0x11@adas抓拍事件",
+      ],
+    },
+    {
+      text: "DSM1",
+      arr: [
+        "DSM,0,0x01@疲劳驾驶报警哈欠",
+        "DSM,0,0xFE@闭眼",
+        "DSM,0,0x02@接打电话报警",
+        "DSM,0,0x03@抽烟报警",
+        "DSM,0,0x04@分神驾驶报警",
+        "DSM,0,0x05@驾驶员异常报警",
+        "DSM,0,0x07@请勿遮挡摄像头",
+        "DSM,0,0x10@dsm抓拍事件",
+        "DSM,0,0x11@驾驶员变更",
+        "DSM,0,0x12@IC 抓拍事件",
+        "DSM,0,0x20@抓拍事件",
+        "DSM,0,0x1F@红外阻断",
+      ],
+    },
+    {
+      text: "DSM2",
+      arr: [
+        "DSM,1,0x0A@未系安全带",
+        "DSM,1,0x0C@双手脱离方向盘",
+        "DSM,1,0x0D@玩手机",
+      ],
+    },
+    {
+      text: "BSD1",
+      arr: ["BSD,0,0x03@盲区报警"],
+    },
+    {
+      text: "BSD2",
+      arr: ["BSD,1,0x04@盲区报警"],
+    },
+  ],
+};
+const navTitle = ref(Lang["navTitle"]); // 标题
+const unit = ref("0-120 Km/h");
+const { lang } = inject("lang");
+const showError = ref(false);
+const radio = ref("ADAS,0,0x01");
+const speed = ref(0);
+const activeNames = ref([0, 1, 2, 3, 4]);
+const algorithm = ref(Lang["algorithm"]);
+
+const getUint = (num) => {
+  if (num == 1) {
+    unit.value = "0-120 Km/h";
+  } else {
+    unit.value = "0-74.56 mile/h";
+  }
+};
+
+const setSpeed = (value) => {
+  var vals = unit.value.split(" ")[0];
+  var info = vals.split("-");
+  if (
+    parseFloat(value) >= parseFloat(info[0]) &&
+    parseFloat(value) <= parseFloat(info[1])
+  ) {
+    showError.value = false;
+  } else {
+    showError.value = true;
+  }
+};
+
+const Modelfilter = (item) => {
+  return item.split("@");
+};
+
+defineComponent({
+  name: "yunweibao-AnalogTrigger",
+});
+
+// 查询
+const BottomSearch = () => {
+  androidStatus_fn();
+  return false;
+};
+// 保存
+const BottomSubmit = () => {
+  var nual = radio.value;
+  if (showError.value) {
+    console.log("请检查");
+    return false;
+  }
+  var str = 0;
+  if (lang.value) {
+    str = speed.value;
+  } else {
+    str = speed.value * 1.609344000000865;
+  }
+  var cmds = "$GPSSIMUSPEED," + str;
+  postAN.ANsendSetting(cmds);
+  postAN.ANsendSetting("$AIMANUAL," + nual);
+  return false;
+};
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  // alert(lang.value)
+  if (cmds.indexOf("GPSSIMUSPEED") !== -1) {
+    if (lang.value) {
+      speed.value = cmdArr[0];
+    } else {
+      speed.value = Math.ceil(cmdArr[0] / 1.609344000000865);
+    }
+    return false;
+  }
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$GPSSIMUSPEED");
+};
+
+onMounted(() => {
+  if (lang.value) {
+    getUint(1);
+  } else {
+    getUint(2);
+  }
+  androidStatus_fn();
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+.channelItem {
+  margin: 5px 0px;
+  text-align: center;
+}
+
+.channelItem > div {
+  padding: 5px;
+  display: inline-block;
+  border: 1px solid #ffffff;
+}
+
+.active {
+  border: 1px solid var(---var-doc-active);
+  color: var(---var-doc-active);
+}
+
+p {
+  margin: 0px;
+  text-align: center;
+  font-size: 12px;
+}
+</style>
