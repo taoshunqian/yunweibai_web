@@ -63,7 +63,6 @@ const AudioFrequency = () => import('@/views/plaseThree/AudioFrequency.vue'); //
 const ShutDown = () => import('@/views/plaseThree/ShutDown.vue'); // 开关机设置
 const PowerSettings = () => import('@/views/plaseThree/PowerSettings.vue'); // 电源设置
 const AnalogTrigger = () => import('@/views/plaseThree/AnalogTrigger.vue'); // 模拟触发
-const PreviewOverlay = () => import('@/views/plaseThree/PreviewOverlay.vue'); // 预览叠加
 
 const routes = [
     {
@@ -80,11 +79,6 @@ const routes = [
         path: '/decode',
         component: decodeProto,
         name: "解析proto"
-    },
-    {
-        path: '/PreviewOverlay',
-        component: PreviewOverlay, 
-        name: "预览叠加"
     },
     {
         path: '/PowerSettings',

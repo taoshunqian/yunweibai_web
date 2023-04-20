@@ -1,0 +1,145 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="Lang['title']">
+      <template #right-icon>
+        <div style="width: 70%">
+          <CheckboxGroup v-model="checkedDate" direction="horizontal">
+            <Checkbox
+              shape="square"
+              icon-size="15px"
+              style="margin-top: 10px; margin-right: 10px"
+              v-for="(item, index) in allData"
+              v-show="showSelectData(Modelfilter(item)[1])"
+              :key="index"
+              :name="Modelfilter(item)[1]"
+            >
+              {{ Modelfilter(item)[0] }}</Checkbox
+            >
+          </CheckboxGroup>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+</template>
+
+<script setup>
+import { CellGroup, Cell, Checkbox, CheckboxGroup } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import mixins from "@/mixins/index.js";
+
+let { t, postAN, TabHeaders, StickyBottom, callJSResult_Status } = mixins();
+const Lang = {
+  navTitle: t("PreviewOverlay.navTitle"),
+  template: t("PreviewOverlay.template").split(","),
+  title: t("PreviewOverlay.title"),
+};
+const navTitle = ref(Lang["navTitle"]); // 标题
+const allData = ref(Lang["template"]);
+const checkedDate = ref([]);
+const showData = ref([]);
+
+defineComponent({
+  name: "yunweibao-PreviewOverlay",
+});
+
+const showSelectData = (index) => {
+  if (showData.value.indexOf(index) !== -1) {
+    return false;
+  } else {
+    return true;
+  }
+};
+
+const Modelfilter = (item) => {
+  return item.split("@");
+};
+
+// 查询
+const BottomSearch = () => {
+  androidStatus_fn();
+  return false;
+};
+// 保存
+const BottomSubmit = () => {
+  var cmds = [...checkedDate.value]; // 选中的项目
+  var allselect = [...allData.value];
+  var cmd = "";
+  for (var i = 0; i < allselect.length; i++) {
+    var value = cmds.indexOf(Modelfilter(allselect[i])[1]);
+    var key = Modelfilter(allselect[i])[1];
+    if (value !== -1) {
+      cmd += key + "*1,";
+    } else {
+      cmd += key + "*0,";
+    }
+  }
+  var req = "$PREVIEWOSD," + cmd;
+  postAN.ANsendSetting(req);
+  return false;
+};
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  console.log("获取" + cmdArr);
+  var template = Lang["template"];
+  var items = cmdArr[0].split("*");
+  var offs = cmdArr[1].split("#");
+  var showItems = [];
+  var activeItems = [];
+  for (var i = 0; i < template.length; i++) {
+    var off = Modelfilter(template[i])[1];
+    var index = items.indexOf(off);
+    if (index !== -1) {
+      if (offs[index] != 0) {
+        activeItems.push(off);
+      }
+      showItems.push(template[i]);
+    }
+  }
+  checkedDate.value = activeItems;
+  allData.value = showItems;
+  //   alert(showItems);
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$PREVIEWOSD");
+};
+
+onMounted(() => {
+  androidStatus_fn();
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped>
+.channelItem {
+  margin: 5px 0px;
+  text-align: center;
+}
+
+.channelItem > div {
+  padding: 5px;
+  display: inline-block;
+  border: 1px solid #ffffff;
+}
+
+.active {
+  border: 1px solid var(---var-doc-active);
+  color: var(---var-doc-active);
+}
+
+p {
+  margin: 0px;
+  text-align: center;
+  font-size: 12px;
+}
+</style>

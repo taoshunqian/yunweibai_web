@@ -1,10 +1,8 @@
 import phaseTwo from './phaseTwoGetMessage';
-import phaseThree from './phaseThreeGetMessage';
 
 export default {
     ru: {
         ...phaseTwo.ru,
-        ...phaseThree.ru,
         home: "Главная",
         toast: ["Команда запроса выполнена успешно", "успешно установлен", "Ошибка установки", "Камера не поддерживает установку разрешения", "Идет поиск,Пожалуйста, подождите..."],
         picker: ["Подтвердить", "Отмена"],
@@ -244,16 +242,16 @@ export default {
             ]
         }
     },
+
     en: {
         ...phaseTwo.en,
-        ...phaseThree.en,
         home: "HOME",
         toast: ["Query command issued successfully", "Issued successfully", "Failed to issue", "This camera does not support setting resolution", "Searching, please wait..."],
         picker: ["Confirm", "Cancel"],
         carInfo: {
             //  iphone number 修改为 platform number
-            label: ["Device ID", "JTID", "license plate number", "License plate color",
-                "Area Code", "Manufacturer No", "VIN frame number", "License plate classification", "Engine number", "Protocol"],
+            label: ["Device ID", "platform number", "license plate number", "License plate color",
+                "Area Code", "Manufacturer No", "VIN frame number", "License plate classification", "Engine number", "Agreement Type"],
             placeholder: [
                 "Please enter the device ID", "Please enter your mobile number", "Please enter the license plate number", "Please enter the area code",
                 "Please enter the manufacturer number", "Please enter VIN frame number", "Please enter the license plate category", "Please enter the engine number"
@@ -298,7 +296,7 @@ export default {
         alarmInfo: {
             label: ["Enable", "Buzzer", "Event Name", "type",
                 "delayed", "Escalation type", "Capture mode", "Number of consecutive shots", "Burst interval",
-                "Protocol", "Logical negation", "Switch channel", "Alarm video channel", "Capture channel"],
+                "Agreement Type", "Logical negation", "Switch channel", "Alarm video channel", "Capture channel"],
 
             // ----------- 2023/02/16 二期新增
             labelTwo: ["IO channel", "function"],
@@ -317,7 +315,7 @@ export default {
         },
         cameraInfo: {
             title: [
-                "Enable", "Resolution", "Horizontal Mirror", "Vertical Mirror", "Set resolution"
+                "Enable", "resolving power", "Horizontal Mirror", "mirror vertically", "Set resolution"
             ],
             navTitle: ["camera ", " set up"],
         },
@@ -358,7 +356,7 @@ export default {
         platformStatus: {
             title: [
                 "platform ", "Server IP / domain name", "Server Port", "Enable", "register"
-                , "Protocol", "Platform Type", "Local standards", "Device status"
+                , "Agreement Type", "Platform Type", "Local standards", "Device status"
             ],
             navTitle: "Platform status",
             columns3: "808 Standard protocol platform,Tongtian Star,San Yi,Xing Guan,Chao Yue,Yun Ke,Dongguan Yicheng,Zhong Che,Xiamen Ruixun",
@@ -372,7 +370,7 @@ export default {
         rotaTestNsor: {
             title: [
                 "Enable", "type", "Logical negation", "Pulse detection cycle", "state"
-                , "Protocol"
+                , "Agreement Type"
             ],
             placeholder: [
                 "Please enter the pulse detection cycle"
@@ -386,7 +384,7 @@ export default {
         },
         serveInfo: {
             title: [
-                "Enable", "register", "IP/domain name", "port", "Protocol"
+                "Enable", "register", "IP/domain name", "port", "Agreement Type"
                 , "Platform Type", "Local standards", "Device State"
             ],
             placeholder: [
@@ -441,7 +439,7 @@ export default {
         },
         adas: {
             label: [
-                "Vehicle width", "Camera to left side of vehicle", "Camera installation height", "Camera to bumper"
+                "Vehicle width", "Camera to left side of vehicle", "Camera installation width", "Camera to bumper"
             ],
             placeholder: [
                 "Please enter the vehicle width", "Please enter the distance", "Please enter the width", "Please enter the distance"
@@ -505,7 +503,6 @@ export default {
     },
     zh: {
         ...phaseTwo.zh,
-        ...phaseThree.zh,
         home: "首页",
         toast: ["查询指令成功", "设置成功", "设置失败", "该摄像头不支持设置分辨率", "正在搜索,请稍等..."],
         picker: ["确认", "取消"],
@@ -763,8 +760,6 @@ export default {
         }
     },
     tw: {
-        ...phaseTwo.tw,
-        ...phaseThree.tw,
         home: "首頁",
         toast: ["査詢指令下發成功", "設定成功", "設定失敗", "該鏡頭不支持設定分辯率", "正在搜索,請稍等..."],
         picker: ["確認", "取消"],
