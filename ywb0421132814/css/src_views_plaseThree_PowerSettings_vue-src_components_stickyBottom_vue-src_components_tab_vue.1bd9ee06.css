@@ -1,0 +1,57 @@
+/*!*********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-12.use[1]!./node_modules/_vue-loader@17.0.0@vue-loader/dist/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-12.use[2]!./node_modules/_vue-loader@17.0.0@vue-loader/dist/index.js??ruleSet[0].use[0]!./src/components/tab.vue?vue&type=style&index=0&id=777d1c52&lang=css ***!
+  \*********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+
+.van-nav-bar__right > .van-nav-bar__text {
+  font-size: 12px;
+  color: green !important;
+}
+
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-12.use[1]!./node_modules/_vue-loader@17.0.0@vue-loader/dist/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-12.use[2]!./node_modules/_vue-loader@17.0.0@vue-loader/dist/index.js??ruleSet[0].use[0]!./src/components/stickyBottom.vue?vue&type=style&index=0&id=5ddaee30&lang=css ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+
+.stickyBottom {
+  position: fixed;
+  width: 100%;
+  bottom: 0px;
+  padding-bottom: 15px;
+  padding-top: 8px;
+  border-top: 1px solid #cdcdcd;
+
+  background: white;
+}
+.stickyDiv {
+  width: 98%;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: nowrap;
+}
+.stickyButtom {
+  border-radius: 5px;
+  height: 40px;
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??clonedRuleSet-12.use[1]!./node_modules/_vue-loader@17.0.0@vue-loader/dist/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js??clonedRuleSet-12.use[2]!./node_modules/_vue-loader@17.0.0@vue-loader/dist/index.js??ruleSet[0].use[0]!./src/views/plaseThree/PowerSettings.vue?vue&type=style&index=0&id=4fba0186&scoped=true&lang=css ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+
+.channelItem[data-v-4fba0186] {
+  margin: 5px 0px;
+  text-align: center;
+}
+.channelItem > div[data-v-4fba0186] {
+  padding: 5px;
+  display: inline-block;
+  border: 1px solid #ffffff;
+}
+.active[data-v-4fba0186] {
+  border: 1px solid var(---var-doc-active);
+  color: var(---var-doc-active);
+}
+p[data-v-4fba0186] {
+  margin: 0px;
+  text-align: center;
+  font-size: 12px;
+}
+
