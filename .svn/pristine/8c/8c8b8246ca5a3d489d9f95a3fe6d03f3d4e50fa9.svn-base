@@ -1,0 +1,88 @@
+<template>
+  <div></div>
+</template>
+
+
+<script setup>
+import { EventSourcePolyfill } from "event-source-polyfill";
+var sha256 = require("js-sha256");
+var obj = JSON.stringify({
+  message: encodeURIComponent("你好"),
+  conversationId: "276b311d-0c59-4e34-8adb-782b9e65e636", // 房间ID , 不传就创建新的房间
+  chat_role: 0,
+});
+var code = "c02667d4d416340f01eb82a22448db1529cd71c7de892326d39f282370d61530"; // 固定密钥
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __defProp = Object.defineProperty;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var t = {
+  params: obj,
+  uid: code,
+};
+
+var __defNormalProp = (e, t, o) =>
+  t in e
+    ? __defProp(e, t, {
+        enumerable: !0,
+        configurable: !0,
+        writable: !0,
+        value: o,
+      })
+    : (e[t] = o);
+
+const buildHeader = (e) => ({
+  Authorization:
+    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzkxNywib3BlbmlkIjoib1BDYXE1bWRNNm1IUkZlZmk1X0xEX1hQbl9VZyIsImlhdCI6MTY4MTk4MjI4MCwiZXhwIjoxNjgyNTg3MDgwfQ.Ur3-KOurxhHHgHy3_rAdjx3kRy0hH1ShMgZSlzbONww",
+  "x-sendData": e.params,
+  "x-sign": sha256.sha256(e.params + e.uid),
+});
+
+const __spreadValues = (e, t) => {
+  for (var o in t || (t = {}))
+    __hasOwnProp.call(t, o) && __defNormalProp(e, o, t[o]);
+  if (__getOwnPropSymbols)
+    // eslint-disable-next-line no-redeclare
+    for (var o of __getOwnPropSymbols(t))
+      __propIsEnum.call(t, o) && __defNormalProp(e, o, t[o]);
+  return e;
+};
+
+var sign = __spreadValues({}, buildHeader(t));
+console.log(sign);
+
+// const eventSource = new EventSourcePolyfill(
+//   "https://api.ai.mxcks.com/api/message/accomplish",
+//   {
+//     headers: sign,
+//   }
+// );
+
+// eventSource.addEventListener("open", function () {
+//   console.log("open successfully");
+// });
+// /*
+//  * message：后端返回信息，格式可以和后端协商
+//  */
+// eventSource.addEventListener("message", function (e) {
+//   if (e.data == "done") {
+//     eventSource.close();
+//   } else {
+//     console.log(e.data);
+//   }
+// });
+// /*
+//  * error：错误（可能是断开，可能是后端返回的信息）
+//  */
+// eventSource.addEventListener("error", function (err) {
+//   // 类似的返回信息验证，这里是实例
+//   err && err.status === 401 && console.log("not authorized");
+// });
+
+// setTimeout(() => {
+//   eventSource.close();
+// }, 5000);
+
+// 需要关闭了
+//
+</script>

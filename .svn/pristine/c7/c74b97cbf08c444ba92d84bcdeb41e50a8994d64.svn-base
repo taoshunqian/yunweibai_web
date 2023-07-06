@@ -1,0 +1,603 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="false" />
+
+  <!-- IO 通道 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell
+      :title="$t('alarmInfo.labelTwo[0]')"
+      is-link
+      :value="channelInfo"
+      @click="showPickerFn(5)"
+    />
+  </CellGroup>
+
+  <!-- 功能 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell
+      :title="$t('alarmInfo.labelTwo[1]')"
+      is-link
+      :value="filtersCOlumns(useFunctionKey)"
+      @click="showPickerFn(4)"
+    />
+    <!-- @click="showPickerFn(3)" -->
+  </CellGroup>
+
+  <!-- 是否启用 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">{{
+          $t("alarmInfo.label[0]")
+        }}</label>
+        <Checkbox
+          v-model="check2"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 蜂鸣器是否启用 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell>
+      <template #title>
+        <label style="float: left; margin-right: 10px">{{
+          $t("alarmInfo.label[1]")
+        }}</label>
+        <Checkbox
+          v-model="check"
+          shape="square"
+          icon-size="15px"
+          style="margin-top: 5px"
+        ></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 事件名称 -->
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('alarmInfo.label[2]')"
+      :placeholder="$t('alarmInfo.placeholder[0]')"
+      input-align="right"
+      v-model="setAlarmInfo[4]"
+      autosize
+    />
+  </CellGroup>
+  <!-- 类型 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('alarmInfo.label[3]')">
+      <template #right-icon>
+        <RadioGroup v-model="setAlarmInfo[6]">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            :disabled="ioType.length == 0 ? true : false"
+            v-show="decodeType(channelInfo, 1)"
+            >{{ $t("alarmInfo.radio[0]") }}</Radio
+          >
+          <Radio
+            name="0"
+            shape="square"
+            icon-size="15px"
+            :disabled="ioType.length == 0 ? true : false"
+            v-show="decodeType(channelInfo, 0)"
+            >{{ $t("alarmInfo.radio[1]") }}</Radio
+          >
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 逻辑反 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('alarmInfo.label[10]')">
+      <template #right-icon>
+        <RadioGroup v-model="setAlarmInfo[7]">
+          <Radio
+            name="1"
+            shape="square"
+            style="float: left; margin-right: 10px"
+            icon-size="15px"
+            >{{ $t("alarmInfo.logical[0]") }}</Radio
+          >
+          <Radio name="0" shape="square" icon-size="15px">{{
+            $t("alarmInfo.logical[1]")
+          }}</Radio>
+        </RadioGroup>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 画面切换通道 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="$t('alarmInfo.label[11]')"
+      is-link
+      :value="channel"
+      @click="showPickerFn(3)"
+    />
+  </CellGroup>
+  <!-- 延时 -->
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('alarmInfo.label[4]')"
+      :placeholder="$t('alarmInfo.placeholder[1]')"
+      type="digit"
+      input-align="right"
+      v-model="setAlarmInfo[8]"
+      autosize
+    >
+      <template #button>
+        <label>S</label>
+      </template>
+    </Field>
+  </CellGroup>
+  <!-- 上报类型 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="$t('alarmInfo.label[5]')"
+      is-link
+      :value="type"
+      @click="showPickerFn(1)"
+    />
+  </CellGroup>
+  <!-- 抓拍模式 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="$t('alarmInfo.label[6]')"
+      is-link
+      :value="model"
+      @click="showPickerFn(2)"
+    />
+  </CellGroup>
+  <!-- 连拍张数 -->
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('alarmInfo.label[7]')"
+      :placeholder="$t('alarmInfo.placeholder[2]')"
+      label-width="200"
+      type="digit"
+      input-align="right"
+      autosize
+      v-model="setAlarmInfo[12]"
+    />
+  </CellGroup>
+  <!-- 连拍间隔 -->
+  <CellGroup inset style="margin: 10px">
+    <Field
+      :label="$t('alarmInfo.label[8]')"
+      :placeholder="$t('alarmInfo.placeholder[3]')"
+      type="digit"
+      input-align="right"
+      autosize
+      v-model="setAlarmInfo[13]"
+      :disabled="inputDisabled"
+    />
+  </CellGroup>
+  <!-- 报警录像通道号 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('alarmInfo.label[12]')">
+      <template #right-icon>
+        <div style="width: 150px">
+          <CheckboxGroup v-model="alarmChannel">
+            <Checkbox
+              :name="index + 1"
+              shape="square"
+              style="float: left; margin-right: 3px"
+              icon-size="15px"
+              v-for="(item, index) in 8"
+              :key="index"
+              >{{ index + 1 }}</Checkbox
+            >
+          </CheckboxGroup>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 抓拍通道号 -->
+  <CellGroup inset style="margin: 10px">
+    <Cell :title="$t('alarmInfo.label[13]')">
+      <template #right-icon>
+        <div style="width: 150px">
+          <CheckboxGroup v-model="graspChannel">
+            <Checkbox
+              :name="index + 1"
+              shape="square"
+              style="float: left; margin-right: 3px"
+              icon-size="15px"
+              v-for="(item, index) in 8"
+              :key="index"
+              >{{ index + 1 }}</Checkbox
+            >
+          </CheckboxGroup>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <!-- 弹出层 -->
+  <Popup round v-model:show="showPicker" position="bottom">
+    <!-- :title="$t('alarmInfo.label[9]')" -->
+    <Picker
+      :default-index="defaultIndex"
+      :columns="columns"
+      @cancel="showPicker = false"
+      @confirm="onConfirm"
+      :confirm-button-text="$t('picker[0]')"
+      :cancel-button-text="$t('picker[1]')"
+    />
+  </Popup>
+
+  <footer style="padding-bottom: 50px"></footer>
+
+  <StickyBottom @BottomSearch="BottomSearch" @BottomSubmit="BottomSubmit" />
+
+  <Overlay :show="loading">
+    <div class="wrapper">
+      <Loading type="spinner" color="#1989fa" />
+    </div>
+  </Overlay>
+</template>
+
+<script setup>
+import {
+  CellGroup,
+  Cell,
+  Toast,
+  Checkbox,
+  CheckboxGroup,
+  RadioGroup,
+  Radio,
+  Field,
+  Popup,
+  Picker,
+  Overlay,
+  Loading,
+} from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+import {
+  getQueryString,
+  baseChangeAlarm as baseChange,
+  byteChangeAlarm as byteChange,
+} from "@/utlis/QueryStr";
+import { AlarmInfo } from "@/utlis/ConfigConst";
+
+import mixins from "@/mixins/index.js";
+let { t, postAN, TabHeaders, StickyBottom, callJSResult_Status } = mixins();
+
+const channelColumn = ref([]);
+
+const i8nColumns2 = t("alarmInfo.columns2");
+const i8nColumns3 = t("alarmInfo.columns3");
+const channelTitle = t("alarmInfo.channelTitle");
+const columnsFuction = AlarmInfo;
+
+const filtersCOlumns = (val) => {
+  return columnsFuction[val] ?? t("alarmInfo.filtersCOlumns");
+};
+
+const columns = ref([]);
+const columns2 = ref(i8nColumns2.split(","));
+const columns3 = ref(i8nColumns3.split(","));
+const channelColumns3 = ref([]);
+const channelColumns3Val = ref([]);
+
+// for (var i = 0; i < 9; i++) {
+//   if (i == 0) {
+//     channelColumns3.push(" " + channelTitle);
+//   } else {
+//     channelColumns3.push("AV " + i);
+//   }
+// }
+
+//  报警录像通道号 抓拍通道号
+// 标题
+const navTitle = ref(t("alarmInfo.navTitle"));
+const loading = ref(true);
+const setAlarmInfo = ref([]);
+const defaultIndex = ref(1);
+const showPicker = ref(false);
+const check = ref(false);
+const check2 = ref(false);
+const type = ref("");
+const model = ref("");
+const channel = ref(""); // 画面切换通道
+const alarmChannel = ref([]); // 报警录像通道号
+const graspChannel = ref([]); // 抓拍通道号
+const statePocker = ref(1);
+const inputDisabled = ref(true);
+const useFunctionKey = ref(0);
+const useFunctionCmd = ref([]);
+const modelType = ref(0);
+const activeIndex = ref(0);
+const ioType = ref([]);
+const channelInfo = ref(t("AlarmInfoTwo.channelInfo"));
+const selectChannelChange = ref(false);
+const allAlarm = ref([]);
+
+type.value = columns2.value[setAlarmInfo.value[9]];
+model.value = columns3.value[setAlarmInfo.value[11]];
+
+const decodeType = (channel, index) => {
+  if (ioType.value.length == 0) {
+    return true;
+  }
+  var chanl = channel.split(" ")[1];
+
+  var num = ioType.value[chanl - 1].indexOf(index);
+  if (num === -1) {
+    return false;
+  } else {
+    return true;
+  }
+};
+
+// 查询
+const BottomSearch = () => {
+  Toast(t("toast[0]"));
+  androidStatus_fn();
+  return false;
+};
+// 保存
+const BottomSubmit = () => {
+  var indexInfo = activeIndex.value;
+
+  let alarm = [...setAlarmInfo.value];
+  alarm[1] = +check2.value;
+  alarm[2] = +check.value;
+  alarm[9] = columns2.value.indexOf(type.value);
+  alarm[11] = columns3.value.indexOf(model.value);
+  // alert(channel.value.substring(1,2));
+  // if (channel.value.substring(1, 2) == channelTitle) {
+  //   alarm[3] = "0"; // 画面切换通道
+  // } else {
+  //   alarm[3] = +channel.value.split(" ")[1] ?? "0"; // - 1; // 画面切换通道
+  // }
+
+   alarm[3] =
+    channelColumns3Val.value[channelColumns3.value.indexOf(channel.value)]; 
+  alarm[5] = byteChange(alarmChannel.value); // 报警录像通道号
+  alarm[10] = byteChange(graspChannel.value); // 抓拍通道号
+  // console.log(alarm[3],channel.value.length, channelTitle.length,channel.value == channelTitle)
+  allAlarm.value[indexInfo] = alarm;
+
+  var cmds =
+    "$IOINFO," + allAlarm.value.join("!").replace(/,/g, "~").replace(/!/g, ",");
+  // alert(cmds);
+
+  postAN.ANsendSetting(cmds); // IO设置
+
+  var functionCmd = [...useFunctionCmd.value];
+  functionCmd[indexInfo] = +indexInfo + 1 + "*" + useFunctionKey.value;
+  cmds = "$IOSIGNALTYPEV3," + functionCmd.toString();
+
+  postAN.ANsendSetting(cmds); // 功能设置
+  return false;
+};
+
+// 控制显示的 columns
+const showPickerFn = (num) => {
+  if (num == 1) {
+    columns.value = columns2;
+    defaultIndex.value = columns2.value.indexOf(type.value);
+  } else if (num == 2) {
+    columns.value = columns3;
+    defaultIndex.value = columns3.value.indexOf(model.value);
+  } else if (num == 3) {
+    // 画面切换通道
+    columns.value = channelColumns3.value;
+    defaultIndex.value = channelColumns3.value.indexOf(channel.value);
+  } else if (num == 4) {
+    // 功能
+    columns.value = columnsFuction;
+    defaultIndex.value = useFunctionKey.value;
+  } else if (num == 5) {
+    // 功能
+    columns.value = channelColumn.value;
+    defaultIndex.value = channelColumn.value.indexOf(channelInfo.value);
+  }
+  statePocker.value = num;
+  showPicker.value = true;
+};
+
+// 选择器 确认
+const onConfirm = (value) => {
+  showPicker.value = false;
+  if (statePocker.value == 1) {
+    // 上报类型
+    type.value = value;
+  } else if (statePocker.value == 2) {
+    // 抓拍模式
+    model.value = value;
+    let select = columns3.value.indexOf(model.value);
+    // console.log(select);
+    inputDisabled.value = true;
+    if (select == 0) {
+      setAlarmInfo.value[12] = 1;
+    } else if (select == 1) {
+      setAlarmInfo.value[12] = 2;
+    } else if (select == 2) {
+      inputDisabled.value = false;
+    }
+  } else if (statePocker.value == 3) {
+    // 画面切换通道
+    channel.value = value;
+  } else if (statePocker.value == 4) {
+    // 功能
+    useFunctionKey.value = columnsFuction.indexOf(value);
+  } else if (statePocker.value == 5) {
+    // IO 通道
+    channelInfo.value = value;
+    selectChannelChange.value = true;
+    androidStatus_fn();
+  }
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-Alarm",
+});
+
+const selectChannel = () => {
+  if (modelType.value == 3) {
+    navTitle.value = t("AlarmInfoTwo.selectChannel[0]");
+  } else if (modelType.value == 2) {
+    navTitle.value = t("AlarmInfoTwo.selectChannel[1]");
+  }
+};
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  
+  console.log("test", str);
+
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",").splice(1);
+  selectChannel();
+
+  if (cmds.indexOf("IOTYPE") !== -1) {
+    ioType.value = cmdArr;
+    return false;
+  }
+  if (cmds.indexOf("IOSIGNALTYPEV3") !== -1) {
+    var cmdArr2 = cmds.split(",").splice(1);
+    var allItem = [];
+    cmdArr2.forEach((item) => {
+      var it = item.split("*");
+      allItem.push(it[1]);
+    });
+
+    console.log("arrayTest", JSON.stringify(allItem));
+    // alert(modelType.value)
+    // 匹配
+    if (modelType.value == 1) {
+      // 举升
+      activeIndex.value = allItem.indexOf("24");
+    } else if (modelType.value == 2) {
+      activeIndex.value = allItem.indexOf("23");
+    }
+
+    // 自动匹配
+    if (activeIndex.value == -1 && !selectChannelChange.value) {
+      var indexInfo = 0;
+      for (var u = 0; u < allItem.length; u++) {
+        if (allItem[u] != "24" && allItem[u] != "23") {
+          indexInfo = u;
+          break;
+        }
+      }
+      activeIndex.value = indexInfo;
+      Toast.fail(t("AlarmInfoTwo.toast[0]") + (indexInfo + 1));
+    }
+
+    if (selectChannelChange.value) {
+      activeIndex.value = channelInfo.value.split(" ")[1] - 1;
+    } else {
+      channelInfo.value = t("AlarmInfoTwo.toast[1]") + (activeIndex.value + 1);
+    }
+
+    useFunctionCmd.value = cmdArr2;
+    useFunctionKey.value = cmdArr2[activeIndex.value].split("*")[1];
+    return;
+  }
+
+  if (cmds.indexOf("SWITCHCHN") !== -1) {
+    var cmdArr3 = cmds.split(",").splice(1);
+    console.log(cmds);
+    var value = [];
+    var name = [];
+    cmdArr3.forEach((item) => {
+      var it = item.split("*");
+      value.push(it[0]);
+      if (it[1] == "No") {
+        name.push(channelTitle);
+      } else if (it[1] == "PollingMode") {
+        name.push(t("alarmInfo.channelColumns3"));
+      } else {
+        name.push(it[1]);
+      }
+    });
+    channelColumns3.value = name;
+    channelColumns3Val.value = value;
+  }
+
+  if (cmds.indexOf("IOINFO") !== -1) {
+    cmdArr = cmds.split(",").splice(2);
+    var channel2 = [];
+    const alarmArr = [];
+    for (var i = 0; i < cmdArr.length; i++) {
+      var item = cmdArr[i].split("~");
+      alarmArr.push(item);
+      if (item[0].indexOf("IPC") === -1) {
+        channel2.push(t("AlarmInfoTwo.channelInfo") + (i + 1));
+      }
+    }
+    channelColumn.value = channel2;
+    loading.value = false;
+    allAlarm.value = alarmArr;
+    setAlarmInfo.value = alarmArr[activeIndex.value];
+
+    type.value = columns2.value[setAlarmInfo.value[9]]; // 类型
+    model.value = columns3.value[setAlarmInfo.value[11]]; // 模式
+
+    if(setAlarmInfo.value[11] == 2) {
+      inputDisabled.value = false;
+    }
+
+    channel.value = channelColumns3.value[+setAlarmInfo.value[3]]; // 画面切换通道
+
+    // if (setAlarmInfo.value[3] == "") {
+    //   channel.value = channelTitle; // 画面切换通道
+    // } else {
+      
+
+    // }
+    var alarmChannelStr = new Number(+setAlarmInfo.value[5]).toString(2);
+    alarmChannel.value = baseChange(alarmChannelStr); // 报警录像通道号
+    var graspChannelStr = new Number(+setAlarmInfo.value[10]).toString(2);
+    graspChannel.value = baseChange(graspChannelStr); // 抓拍通道号
+    check.value = !!+setAlarmInfo.value[2];
+    check2.value = !!+setAlarmInfo.value[1];
+    return;
+  }
+};
+
+// // 向安卓发送指令
+const androidStatus_fn = () => {
+  var param = getQueryString("param").split("@"); // 解析出指令
+  modelType.value = param[param.length - 1];
+  // alert(param)
+  // modelType.value = 1; // 2 = 顶盖 1 = 举升  其它
+  postAN.ANSend("$IOSIGNALTYPEV3");
+  postAN.ANSend("$IOTYPE");
+  postAN.ANSend("$SWITCHCHN");
+  setTimeout(() => {
+    postAN.ANSend("$IOINFO");
+  }, 1000);
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+  androidStatus_fn();
+});
+</script>
+
+<style>
+.images {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  /* background: red; */
+  width: 93%;
+  margin: auto;
+}
+.wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+</style>

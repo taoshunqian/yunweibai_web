@@ -1,0 +1,154 @@
+/* eslint-disable no-redeclare */
+/* eslint-disable no-unused-vars */
+
+import { Api } from '@/api/api.js';
+import configApiBase from '@/api/configApiBase';
+import { proto } from '@/api/proto';
+const pbjs = require('pbjs');
+let { apiBase } = configApiBase();
+
+var protobuf = require('@/weichatPb/protobuf.js');
+const TLFtpUpload = require("@/proto/TLFtpUpload.js");
+var tlcsprotobufRoot = protobuf.Root.fromJSON(TLFtpUpload);
+
+var GetDevicePictureUploadStrategyRequest = tlcsprotobufRoot.lookupType("GetDevicePictureUploadStrategyRequest");
+var GetDevicePictureUploadStrategyResponse = tlcsprotobufRoot.lookupType("GetDevicePictureUploadStrategyResponse");
+var msgArr = [];
+var match = /message (\S*) {/;
+
+// 控制如果生成相同的message 名称，不进行再次添加
+const filterMessage = (data, str) => {
+    var bool = false;
+    data.filter((value) => {
+        var message = value.match(match)[1];
+        if (message == str) {
+            bool = true;
+        }
+    })
+    return bool;
+}
+
+// 数组内使用 message时，动态生成 message 名称
+function randCode() {
+    var str = "";
+    for (var i = 0; i < 10; i++) {
+        str += String.fromCharCode(
+            Math.floor(Math.random() * 26) + "a".charCodeAt(0)
+        )
+    }
+    return str.slice(0, 1).toUpperCase() + str.slice(1);
+}
+
+// 处理 数组结构
+const filterArr = (data, callBack) => {
+    var type = "string";
+    var strMsg = "";
+    var isFirst = true;
+    if (data.length > 0) {
+        data.forEach((item, index) => {
+            if (typeof item == "object") {
+                if (isFirst) {
+                    var random = `Ass${randCode()}`;
+                    strMsg = `message ${random} {${encodeMessage(item, callBack)}}`;
+                    callBack(strMsg)
+                    type = random;
+                    isFirst = true;
+                }
+            } else {
+                type = typeof item == "number" ? "uint32" : "string";
+            }
+        })
+    }
+    return type;
+}
+
+// 区分值生成不同的 key value
+function encodeMessage(data, callBack) {
+    var strProto = "";
+    var num = 1;
+    for (var i in data) {
+        if (typeof data[i] == "object") {
+            if (data[i] instanceof Array) {
+                strProto += `repeated ${filterArr(data[i], callBack)} ${i} = ${num};`;
+            } else {
+                var strMsg = "";
+                var UpperCaseStr = i.slice(0, 1).toUpperCase() + i.slice(1);
+                strMsg += `message ${UpperCaseStr} {${encodeMessage(data[i], callBack)}}`;
+                if (!filterMessage(msgArr, UpperCaseStr)) {
+                    callBack(strMsg)
+                }
+                strProto += `${UpperCaseStr} ${i} = ${num};`;
+            }
+        } else if (typeof data[i] == "number") {
+            strProto += `uint32 ${i} = ${num};`;
+        } else if (typeof data[i] == "string") {
+            strProto += `string ${i} = ${num};`;
+        } else if (typeof data[i] == "boolean") {
+            strProto += `bool ${i} = ${num};`;
+        }
+        num++;
+    }
+    return strProto;
+}
+
+// 动态生成 message
+function encodeMsg(data) {
+    var msgArr = [];
+    var message = encodeMessage(data, (msg) => {
+        msgArr.push(msg)
+    });
+    return { msgArr, message };
+}
+
+export async function Login(url2, reqData, resData) {
+    var url = url2;
+    var data = {
+        ...reqData
+    };
+    var decodeData = {
+        ...resData
+    };
+
+    // 序列化
+    var encode = encodeMsg(data);
+    var strProto = `${encode.msgArr.join(" ")} message Demo { ${encode.message}}`;
+    // console.log(pbjs)
+    const schema = pbjs.parseSchema(`${strProto}`).compile();
+    const buffer = new Uint8Array(schema.encodeDemo(data)).buffer;
+
+    const res = await Api._freeQequest(url, buffer);
+
+    if (res.data instanceof ArrayBuffer) { // 反序列化
+        var decode = encodeMsg(decodeData);  
+        var decodeStrProto = ` ${decode.msgArr.join(" ")} message Demo { ${decode.message}}`;
+        const decodeSchema = pbjs.parseSchema(`${decodeStrProto}`).compile(); 
+        if (res.status == 200) {
+            var buf = new Uint8Array(res.data);
+            const decodeBuffer = decodeSchema.decodeDemo(buf);
+            console.log(decodeBuffer)
+            return { decodeBuffer, status: res.status };
+        } else {
+            return { decodeBuffer: res[0], status: res[1] };
+        }
+    } else {
+        console.log(res.data)
+        return res.data;
+    }
+
+
+}
+
+
+export async function GetFileContent(data) {
+    var url = apiBase.url + "/api/protobuf";
+    var requestBuffer = await Api.getUnit8Data(data, 'TLBluetooth.DeviceFileContentRequest');
+    const res = await Api._request(url, requestBuffer, 'TLBluetooth.webresponse');
+    console.log(res);
+}
+
+export const GetDevicePictureUploadStrategy = async (data) => {
+    var url = "http://192.168.100.50:9337/GetDevicePictureUploadStrategy";
+    var requestBuffer = await Api.getUnit8Data2(data, GetDevicePictureUploadStrategyRequest);
+    const res = await Api._request(url, requestBuffer, GetDevicePictureUploadStrategyResponse);
+    console.log(res);
+}

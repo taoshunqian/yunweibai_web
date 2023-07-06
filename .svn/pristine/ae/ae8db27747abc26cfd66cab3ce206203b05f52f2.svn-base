@@ -1,0 +1,259 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+
+  <CellGroup inset class="cell-group">
+    <Cell :title="$t('CodeStream.template[0]')">
+      <template #right-icon>
+        <span style="color: green">{{ sessionSize }} GB/h</span>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <!-- 通道 -->
+  <CellGroup
+    inset
+    class="cell-group"
+    v-for="(item, index) in CodeStreamInfo"
+    :key="index"
+    @click="getRouter(item)"
+  >
+    <Cell :title="$t('CodeStream.template[1]') + ' ' + item[0]" />
+    <Cell>
+      <template #title>
+        <ul>
+          <li>
+            {{ $t("CodeStream.template[2]") }}:
+            <span>{{ columnPower[item[3]] }}</span>
+          </li>
+          <li>
+            {{ $t("CodeStream.template[3]") }}: <span>{{ item[4] }}</span>
+          </li>
+          <li>
+            {{ $t("CodeStream.template[4]") }}:
+            <span style="color: green">
+              {{
+                item[2] == "1"
+                  ? $t("CodeStream.audioType[0]")
+                  : $t("CodeStream.audioType[1]")
+              }}
+            </span>
+          </li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+          <li>
+            {{ $t("CodeStream.template[5]") }}:
+            <span>{{ columnVideo[getVideoEnCode(item[8])] }}</span>
+          </li>
+          <li>
+            {{ $t("CodeStream.template[6]") }}:
+            <span>{{ columnImage[item[7]] }}</span>
+          </li>
+          <li>
+            {{ $t("CodeStream.template[7]") }}:
+            <span style="color: green">{{ noteArr[index] }} GB/h</span>
+          </li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <!-- ipc -->
+  <CellGroup
+    inset
+    class="cell-group"
+    v-for="(item, index) in IpcStreamInfo"
+    :key="index"
+    @click="getRouter(item)"
+  >
+    <Cell :title="item[0]" />
+    <Cell>
+      <template #title>
+        <ul>
+          <li>
+            {{ $t("CodeStream.template[2]") }}:
+            <span>{{ item[3] ?? "" }}</span>
+          </li>
+          <li>
+            {{ $t("CodeStream.template[3]") }}: <span>{{ item[4] ?? "" }}</span>
+          </li>
+          <li>
+            {{ $t("CodeStream.template[4]") }}:
+            <span style="color: green">
+              {{
+                item[2] != undefined
+                  ? item[2] == "1"
+                    ? $t("CodeStream.audioType[0]")
+                    : $t("CodeStream.audioType[1]")
+                  : ""
+              }}
+            </span>
+          </li>
+        </ul>
+      </template>
+      <template #right-icon>
+        <ul>
+          <li>
+            {{ $t("CodeStream.template[5]") }}:
+            <span>{{ ipcPowerFn(item[8]) }}</span>
+          </li>
+          <li>
+            {{ $t("CodeStream.template[6]") }}:
+            <span>{{ columnImage[item[7]] ?? "" }}</span>
+          </li>
+          <li>
+            {{ $t("CodeStream.template[7]") }}:
+            <span style="color: green"
+              >{{ ipcSessionArr[index] ?? "" }} GB/h</span
+            >
+          </li>
+        </ul>
+      </template>
+    </Cell>
+  </CellGroup>
+</template>
+
+
+<script setup>
+import {
+  columnPower,
+  columnVideo,
+  ipcPower,
+  columnImage,
+} from "@/utlis/ConfigConst";
+import { Cell, CellGroup, Toast } from "vant";
+import { getQueryString } from "@/utlis/QueryStr";
+import { defineComponent, ref, onMounted } from "vue";
+
+import mixins from "@/mixins/index.js";
+let { t, postAN, TabHeaders, router, callJSResult_Status } = mixins();
+
+const navTitle = ref(t("CodeStream.navTitle"));
+let showType = 0;
+const CodeStreamInfo = ref([]);
+const sessionArr = ref([]);
+const ipcSessionArr = ref([]);
+const IpcStreamInfo = ref([]);
+const sessionSize = ref("0");
+let noteArr = ref([]);
+
+const getVideoEnCode = (value) => {
+  var code = value.split(":")[0];
+  return code;
+};
+
+const ipcPowerFn = (value) => {
+  return value != undefined ? ipcPower[getVideoEnCode(value)] : "";
+};
+
+const getRouter = (item) => {
+  // alert(item.length);
+  if (item.length > 5) {
+    router.push({
+      path: "/CodeStreamDetails",
+      query: {
+        channel: item[0],
+        type: showType,
+      },
+    });
+  } else {
+    Toast.fail("不能设置");
+  }
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-CodeStream",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  
+  var cmds = str.split(";")[0];
+   var cmdArr = cmds.split(",").splice(1);
+  if (cmds.indexOf("RECORDNOTE") !== -1) {
+    noteArr.value.push(cmdArr[0]);
+    if(noteArr.value.length == CodeStreamInfo.value.length) {
+      var sum = 0;
+      var data = [...noteArr.value];
+      data.forEach((item) => {
+        sum += (+item);
+      });
+      sessionSize.value = sum;
+    }
+    return false;
+  }
+  
+ 
+  var cmdItem = [];
+  // var numberSize = 0;
+  var ipcInfo = [];
+  cmdArr.forEach((item) => {
+    var it = item.split("#") ?? [];
+    if (item.indexOf("IPC") !== -1) {
+      var ipcSizeVal = it[6] ?? 0;
+      var ipcSize = (ipcSizeVal * 3600) / 1024 / 1024 / 8;
+      // numberSize += ipcSize;
+      ipcSessionArr.value.push(ipcSize.toFixed(2));
+      ipcInfo.push(it);
+      return false;
+    }
+    var size = (it[6] * 3600) / 1024 / 1024 / 8;
+    // numberSize += size;
+    sessionArr.value.push(size.toFixed(2));
+    cmdItem.push(it);
+  });
+  // sessionSize.value = numberSize.toFixed(2);
+  CodeStreamInfo.value = cmdItem;
+  // console.warn("获取数据" + cmdArr);
+  IpcStreamInfo.value = []; // ipcInfo
+
+  // 获取存储信息
+  cmdItem.forEach((item) => {
+    // console.warn(`编码标准: ${getVideoEnCode(item[8])} 位率类型 ${item[5]} 位率  ${item[6]}`);
+    var note =
+      "$RECORDNOTE," + `${item[5]},${item[6]},${getVideoEnCode(item[8])}`;
+    postAN.ANSend(note);
+    // console.log(note);
+  });
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  try {
+    var param = getQueryString("param").split("@"); // 解析出指令 // .split("@")
+    console.log(param);
+    var type = param[param.length - 1];
+    showType = type;
+    if (type == 1) {
+      navTitle.value = t("CodeStream.androidStatus_fn[0]");
+      postAN.ANSend("$MAINRECORDV3");
+    } else {
+      navTitle.value = t("CodeStream.androidStatus_fn[1]");
+      postAN.ANSend("$SUBRECORDV3");
+    }
+    return;
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+onMounted(() => {
+  androidStatus_fn();
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin: 10px;
+}
+</style>

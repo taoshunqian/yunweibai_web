@@ -41,4 +41,7 @@ module.exports = defineConfig({
     open: state
   },
   configureWebpack: state ?  envDevelopment  : envProduction
+  // configureWebpack: envDevelopment
 })
+
+

@@ -1,0 +1,287 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" :lavelMuch="true" />
+
+  <div class="images">
+    <img src="../../assets/image/TPMS1.jpg" alt="" />
+    <img src="../../assets/image/TPMS2.jpg" alt="" />
+  </div>
+
+  <!-- 启用 -->
+  <CellGroup inset class="cell-group">
+    <Cell :title="$t('TyrepressureDerails.template[0]')">
+      <template #right-icon>
+        <Checkbox v-model="useCmdInfo[1]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <!-- 传感器名称 -->
+  <CellGroup inset class="cell-group">
+    <Field
+      :label="$t('TyrepressureDerails.template[1]')"
+      v-model="useCmdInfo[2]"
+      :placeholder="$t('TyrepressureDerails.templatePlaceholder[0]')"
+      input-align="right"
+    />
+  </CellGroup>
+
+  <!-- 最低胎压 -->
+  <CellGroup inset class="cell-group"
+    ><Field
+      :label="$t('TyrepressureDerails.template[2]')"
+      label-width="150"
+      :placeholder="$t('TyrepressureDerails.templatePlaceholder[1]')"
+      input-align="right"
+      v-model="useCmdInfo[3]"
+      type="number"
+    >
+      <template #button> Kpa </template></Field
+    >
+  </CellGroup>
+
+  <!-- 最高胎压 -->
+  <CellGroup inset class="cell-group"
+    ><Field
+      :label="$t('TyrepressureDerails.template[3]')"
+      label-width="150"
+      :placeholder="$t('TyrepressureDerails.templatePlaceholder[2]')"
+      input-align="right"
+      v-model="useCmdInfo[4]"
+      type="number"
+    >
+      <template #button> Kpa </template></Field
+    >
+  </CellGroup>
+
+  <!-- 最低胎温 -->
+  <CellGroup inset class="cell-group"
+    ><Field
+      :label="$t('TyrepressureDerails.template[4]')"
+      label-width="150"
+      :placeholder="$t('TyrepressureDerails.templatePlaceholder[3]')"
+      input-align="right"
+      type="number"
+      v-model="useCmdInfo[5]"
+    >
+      <template #button> °C</template></Field
+    >
+  </CellGroup>
+
+  <!-- 最高胎温 -->
+  <CellGroup inset class="cell-group"
+    ><Field
+      :label="$t('TyrepressureDerails.template[5]')"
+      label-width="150"
+      :placeholder="$t('TyrepressureDerails.templatePlaceholder[4]')"
+      input-align="right"
+      type="number"
+      v-model="useCmdInfo[6]"
+    >
+      <template #button> °C</template></Field
+    >
+  </CellGroup>
+  <!-- 预览叠加 -->
+  <CellGroup inset class="cell-group">
+    <Cell :title="$t('TyrepressureDerails.template[6]')">
+      <template #right-icon>
+        <Checkbox v-model="useCmdInfo[7]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 蜂鸣器 -->
+  <CellGroup inset class="cell-group">
+    <Cell :title="$t('TyrepressureDerails.template[7]')">
+      <template #right-icon>
+        <Checkbox v-model="useCmdInfo[8]" shape="square"></Checkbox>
+      </template>
+    </Cell>
+  </CellGroup>
+  <!-- 报警输出 -->
+  <CellGroup inset class="cell-group">
+    <Cell :title="$t('TyrepressureDerails.template[8]')">
+      <template #right-icon>
+        <div>
+          <CheckboxGroup
+            v-model="columsChecked"
+            direction="horizontal"
+            style="width: 200px"
+          >
+            <Checkbox
+              :name="item"
+              shape="square"
+              v-for="(item, index) in alarmNumber"
+              :key="index"
+              style="margin-bottom: 8px"
+              >{{ item }}</Checkbox
+            >
+          </CheckboxGroup>
+        </div>
+      </template>
+    </Cell>
+  </CellGroup>
+
+  <footer style="padding-bottom: 50px"></footer>
+
+  <StickyBottom @BottomSubmit="BottomSubmit" @BottomSearch="BottomSearch" />
+</template>
+
+
+<script setup>
+
+import { CellGroup, Field, CheckboxGroup, Checkbox, Cell } from "vant";
+import { defineComponent, ref, onMounted } from "vue";
+
+import mixins from '@/mixins/index.js'
+let {  t, postAN, TabHeaders, StickyBottom,useRoute,callJSResult_Status }= mixins();
+let route = useRoute();
+
+const index = route.query.index;
+const navTitle = ref(t("TyrepressureDerails.navTitle") + index);
+
+const allCmdInfo = ref([]);
+const useCmdInfo = ref([]);
+const columsChecked = ref([]);
+
+const alarmNumber = ref([1,2,3,4,5,6,7,8]);
+
+const BottomSubmit = () => {
+  var alarmCheck = [...columsChecked.value];
+  var useCmd = [...useCmdInfo.value];
+  var alarmInfo = [];
+  for (var i = 1; i <= 8; i++) {
+    if (alarmCheck.includes(i)) {
+      alarmInfo.push(1);
+    } else {
+      alarmInfo.push(0);
+    }
+    // console.log(i);
+  }
+  alarmInfo = alarmInfo.reverse().join("");
+  var alarmOutpt = parseInt(alarmInfo, 2);
+  useCmd[9] = alarmOutpt;
+  var filterArr = [1, 7, 8];
+  var cmds = [];
+  for (var j = 0; j < useCmd.length; j++) {
+    if (filterArr.includes(j)) {
+      cmds.push(+useCmd[j]);
+    } else {
+      cmds.push(useCmd[j]);
+    }
+  }
+  allCmdInfo.value[index - 1] = cmds;
+  var cmdInfo = [...allCmdInfo.value];
+  var cmd = [];
+  for (var k = 0; k < cmdInfo.length; k++) {
+    var it = cmdInfo[k].join("*");
+    cmd.push(it);
+  }
+  var cmdInfos = "$TPMSPARAMV3," + cmd.toString();
+  postAN.ANsendSetting(cmdInfos);
+};
+const BottomSearch = () => {
+  androidStatus_fn();
+};
+
+const filtesCheack = (num) => {
+  return !!+num;
+};
+
+const baseChange = (value) => {
+  var leng = value.length;
+  var number = 8 - leng;
+  var str = "";
+  for (var i = 0; i < number; i++) {
+    str += "0";
+  }
+  str += value;
+  var select = str.split("");
+  return select;
+};
+
+// 命名空间
+defineComponent({
+  name: "yunweibao-TyrepressureDerails",
+});
+
+// 安卓回调函数r
+const callJSResult = (str) => {
+  alert(str)
+  var cmds = str.split(";")[0];
+
+  var cmdArrSplit= cmds.split(",");
+
+  var alarmNumbers=parseInt(cmdArrSplit[1]);
+
+  var alarmNumberArray=[];
+
+  for(var i=1;i<=alarmNumbers;i++){
+       alarmNumberArray.push(i);
+  }
+
+  alarmNumber.value=alarmNumberArray;
+
+  var cmdArr=cmdArrSplit.splice(1);
+
+  var allArr = [];
+  
+  cmdArr.forEach((item) => {
+    var it = item.split("*");
+    if (it[0] == index) {
+      useCmdInfo.value = it;
+    }
+    allArr.push(it);
+  });
+  
+  useCmdInfo.value[1] = filtesCheack(useCmdInfo.value[1]);
+  useCmdInfo.value[7] = filtesCheack(useCmdInfo.value[7]);
+  useCmdInfo.value[8] = filtesCheack(useCmdInfo.value[8]);
+
+  let output = Number(useCmdInfo.value[9]).toString(2);
+
+  let activeIndex = baseChange(output).reverse();
+
+  var selectArr = [];
+  // eslint-disable-next-line no-redeclare
+  for (var i = 0; i < activeIndex.length; i++) {
+    if (activeIndex[i] == 1) {
+      selectArr.push(i + 1);
+    }
+  }
+
+  console.log("selectArr",selectArr);
+
+  columsChecked.value = selectArr;
+
+  allArr.shift();
+  allCmdInfo.value = allArr;
+};
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$TPMSPARAMV3");
+};
+androidStatus_fn();
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+});
+</script>
+
+<style scoped lang="scss">
+ul {
+  li {
+    margin-bottom: 5px;
+  }
+}
+.cell-group {
+  margin-top: 10px;
+}
+.images {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: nowrap;
+  img {
+    width: 45%;
+  }
+}
+</style>

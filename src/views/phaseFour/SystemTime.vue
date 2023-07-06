@@ -1,0 +1,349 @@
+<template>
+  <TabHeaders :navTitle="navTitle" :leftArrow="false" />
+  <!-- 日期格式 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="templateLang[0]"
+      is-link
+      :value="dateformatColumns[systemFormat]"
+      @click="showPickerClick(0, systemFormat, 0)"
+    />
+  </CellGroup>
+  <!-- 系统日期 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="templateLang[1]"
+      is-link
+      :value="systemDate"
+      @click="showPickerTimeClick(10, systemDate, 1)"
+    />
+  </CellGroup>
+  <!-- 系统时间 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="templateLang[2]"
+      is-link
+      :value="systemTime"
+      @click="showPickerClick(5, systemTime, 2)"
+    />
+  </CellGroup>
+  <!-- 时间同步 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="templateLang[3]"
+      is-link
+      :value="systemAll[8]"
+      @click="showPickerClick(1, 8, 3)"
+    />
+  </CellGroup>
+  <!-- 选择时区 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="templateLang[4]"
+      is-link
+      :value="systemAll[9]"
+      @click="showPickerClick(2, 9, 4)"
+    />
+  </CellGroup>
+  <!-- 时 -->
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="templateLang[5]"
+      is-link
+      :value="systemAll[10]"
+      @click="showPickerClick(3, 10, 5)"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 10px" class="cellGroup">
+    <Cell
+      :title="templateLang[6]"
+      is-link
+      :value="systemAll[11]"
+      @click="showPickerClick(4, 11, 6)"
+    />
+  </CellGroup>
+
+  <CellGroup inset style="margin: 20px; height: 40px">
+    <Button type="primary" style="width: 100%" @click="synchronousClick"
+      >同步手机时间</Button
+    >
+  </CellGroup>
+
+  <Popup round v-model:show="showPickerTime" position="bottom">
+    <DatetimePicker
+      :title="popupTimeTitle"
+      v-model="currentDate"
+      type="date"
+      :columns-order="columnsOrder"
+      :formatter="formatter"
+      @cancel="showPickerTime = false"
+      :confirm-button-text="$t('picker[0]')"
+      :cancel-button-text="$t('picker[1]')"
+      @confirm="onConfirm"
+    />
+  </Popup>
+
+  <Popup round v-model:show="showPicker" position="bottom">
+    <Picker
+      :title="popupTitle"
+      :columns="columns"
+      @cancel="showPicker = false"
+      :default-index="deviceColorIndex"
+      :confirm-button-text="$t('picker[0]')"
+      :cancel-button-text="$t('picker[1]')"
+      @confirm="onConfirm"
+    />
+  </Popup>
+
+  <keep-alive>
+    <StickyBottom
+      @BottomSubmit="BottomSubmit"
+      @BottomSearch="BottomSearch"
+      @BottomNext="BottomNext"
+    />
+  </keep-alive>
+</template>
+
+<script setup>
+import {
+  CellGroup,
+  Cell,
+  Button,
+  Toast,
+  Popup,
+  Picker,
+  DatetimePicker,
+} from "vant";
+
+import { defineComponent, ref, onMounted } from "vue";
+import moment from "moment";
+// GNSS
+import mixins from "@/mixins/index.js";
+let { t, postAN, TabHeaders, StickyBottom, callJSResult_Status } = mixins();
+import { getQueryString } from "@/utlis/QueryStr";
+
+const templateLang = t("SystemTime.template").split(",");
+const navTitle = ref(t("SystemTime.title")); // 标题
+const showPicker = ref(false);
+const columns = ref([]);
+const dateformatColumns = ["YYYY-MM-DD", "MM-DD-YYYY", "DD-MM-YYYY"];
+const gpsColumns = t("SystemTime.gps").split(",");
+const timeZoneColumns = t("SystemTime.timeZone").split(",");
+
+const hourColumns = [
+  "00",
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+];
+const minuteColumns = ["00", "15", "30", "45"];
+function createHms(length, startNum = 0) {
+  var date = [];
+  for (var i = startNum; i < length; i++) {
+    date.push(i < 10 ? `0${i}` : i);
+  }
+  return date;
+}
+
+const showObj = {
+  dateformatColumns: dateformatColumns,
+  gpsColumns: gpsColumns,
+  timeZoneColumns: timeZoneColumns,
+  hour: hourColumns,
+  minute: minuteColumns,
+  second: [
+    {
+      values: createHms(24),
+    },
+    {
+      values: createHms(60),
+    },
+    {
+      values: createHms(60),
+    },
+  ],
+};
+const popupTimeTitle = ref("");
+const popupTitle = ref("");
+const deviceColorIndex = ref(0);
+const showPickerTime = ref(false);
+const columnsOrder = ref(["year", "month", "day"]);
+const currentDate = ref("00:00:00");
+const openCell = ref(-1);
+const systemIndex = ref(1);
+
+const systemAll = ref([]);
+const systemDate = ref("");
+const systemOriginalDate = ref("");
+const systemTime = ref("");
+const systemFormat = ref("");
+
+// 保存
+const BottomSubmit = () => {
+  var allCmds = [...systemAll.value];
+  var defineCmd = allCmds.slice(8);
+
+  defineCmd[0] = gpsColumns.indexOf(defineCmd[0]);
+  defineCmd[1] = timeZoneColumns.indexOf(defineCmd[1]);
+  defineCmd[3] = minuteColumns.indexOf(defineCmd[3]);
+
+  var cmds = [
+    "$SYSTEMTIME",
+    ...systemOriginalDate.value.split("-"),
+    ...systemTime.value.split(":"),
+    systemFormat.value,
+    ...defineCmd,
+  ];
+  postAN.ANsendSetting(cmds.toString());
+  return false;
+};
+// 查询
+const BottomSearch = () => {
+  Toast(t("toast[0]"));
+  androidStatus_fn();
+};
+
+// 同步手机信息
+const synchronousClick = () => {
+  var date =  postAN.ANgetDate();
+  console.warn("当前时间:" + date);
+  var nowDateTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+
+  var nowDate = nowDateTime.split(" ");
+  systemOriginalDate.value = nowDate[0];
+  // 系统日期
+  systemDate.value = moment(nowDate[0]).format(
+    dateformatColumns[systemFormat.value]
+  );
+  // 系统时间
+  systemTime.value = nowDate[1];
+  // 同步时区
+  var timeZone = getQueryString("TimeZone");
+  var zone = "";
+  timeZone.indexOf("+") !== -1
+    ? (zone = timeZoneColumns[0])
+    : (zone = timeZoneColumns[1]);
+  systemAll.value[9] = zone;
+  Toast(t("SystemTime.toast"));
+
+  BottomSubmit();
+};
+
+const showPickerTimeClick = (index, data, langIndex) => {
+  showPickerTime.value = true;
+  openCell.value = index;
+  currentDate.value = new Date(data);
+  popupTimeTitle.value = templateLang[langIndex];
+};
+
+const showPickerClick = (index, data, langIndex) => {
+  popupTitle.value = templateLang[langIndex];
+  columns.value = [...Object.values(showObj)[index]];
+  openCell.value = index;
+  switch (index) {
+    case 0:
+      deviceColorIndex.value = data;
+      break;
+    case 5:
+      var time = data.split(":");
+      time.forEach((item, index) => {
+        columns.value[index]["defaultIndex"] = item;
+      });
+      break;
+    default:
+      deviceColorIndex.value = columns.value.indexOf(systemAll.value[data]);
+      systemIndex.value = data;
+  }
+  showPicker.value = true;
+};
+
+const onConfirm = (e) => {
+  let index = openCell.value;
+  switch (index) {
+    case 0:
+      systemFormat.value = columns.value.indexOf(e);
+      systemDate.value = moment(systemOriginalDate.value).format(e);
+      break;
+    case 5:
+      systemTime.value = e.join(":");
+      break;
+    case 10:
+      systemOriginalDate.value = moment(e).format("YYYY-MM-DD");
+      systemDate.value = moment(e).format(
+        dateformatColumns[systemFormat.value]
+      );
+      break;
+    default:
+      systemAll.value[systemIndex.value] = e;
+  }
+  showPicker.value = false;
+  showPickerTime.value = false;
+};
+
+defineComponent({
+  name: "yunweibao-SystemTime",
+});
+
+// -------------------------------------------------------------------
+// 安卓回调函数
+const callJSResult = (str) => {
+  var cmds = str.split(";")[0];
+  var cmdArr = cmds.split(",");
+  console.log(cmdArr);
+  systemDate.value = cmdArr.slice(1, 4).join("-");
+  systemOriginalDate.value = systemDate.value;
+
+  systemDate.value = moment(systemDate.value).format(
+    dateformatColumns[cmdArr[7]]
+  );
+  var time = cmdArr.slice(4, 7);
+  const currentTime = moment();
+  
+  systemTime.value = currentTime
+    .set({ hour: time[0], minute: time[1], second: time[2] })
+    .format("HH:mm:ss");
+
+  systemFormat.value = cmdArr[7];
+  cmdArr[8] = gpsColumns[cmdArr[8]];
+  cmdArr[9] = timeZoneColumns[cmdArr[9]];
+  cmdArr[10] = hourColumns[cmdArr[10]];
+  cmdArr[11] = minuteColumns[cmdArr[11]];
+
+  systemAll.value = [...cmdArr];
+};
+
+// 向安卓发送指令
+const androidStatus_fn = () => {
+  postAN.ANSend("$SYSTEMTIME");
+};
+
+onMounted(() => {
+  window.callJSResult = callJSResult;
+  window.callJSResult_Status = callJSResult_Status;
+
+  androidStatus_fn();
+});
+</script>
+
+<style>
+.fontSize {
+  font-weight: 400;
+  color: #999999;
+  font-size: 12px;
+  width: 95%;
+  margin: auto;
+  text-align: center;
+}
+</style>
